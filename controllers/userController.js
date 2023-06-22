@@ -9,6 +9,7 @@ const register = async (req, res) => {
 
         const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(409).json({ message: "User already exists" });
+        if (password.length < 6) return res.status(400).json({ message: "Weak password, please choose stronger one" });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
