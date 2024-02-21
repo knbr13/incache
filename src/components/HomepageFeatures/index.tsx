@@ -10,32 +10,30 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'Simple and Readable Syntax',
+    Svg: require('@site/static/img/gocodesvg.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Go's clean and concise syntax reduces the cognitive load, making it easy for developers to understand and maintain codebases.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Fast Compilation',
+    Svg: require('@site/static/img/gofastsvg.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        With its fast compilation times, Go enables rapid development cycles, making it ideal for building scalable and maintainable applications.&apos;
+        <code></code>
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Concurrency Built In',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Go makes it easy to write concurrent programs through goroutines and channels, allowing for efficient use of multiple CPU cores.
       </>
     ),
   },
