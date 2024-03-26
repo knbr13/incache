@@ -49,3 +49,13 @@ func (d *DB[K, V]) CopyTo(db *DB[K, V]) {
 		db.m[k] = v
 	}
 }
+
+func (d *DB[K, V]) Keys() []K {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	keys := make([]K, 0, len(d.m))
+	for k := range d.m {
+		keys = append(keys, k)
+	}
+	return keys
+}
