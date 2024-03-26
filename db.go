@@ -33,27 +33,36 @@ func (d *DB[K, V]) Delete(k K) {
 	delete(d.m, k)
 }
 
-func (d *DB[K, V]) TransferTo(db *DB[K, V]) {
-	db.mu.Lock()
-	d.mu.Lock()
-	defer db.mu.Unlock()
-	defer d.mu.Unlock()
-	for k, v := range d.m {
-		db.m[k] = v
+// TransferTo transfers all key-value pairs from the source DB to the provided destination DB.
+//
+// The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
+// The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
+func (src *DB[K, V]) TransferTo(dst *DB[K, V]) {
+	dst.mu.Lock()
+	src.mu.Lock()
+	defer dst.mu.Unlock()
+	defer src.mu.Unlock()
+	for k, v := range src.m {
+		dst.m[k] = v
 	}
-	d.m = make(map[K]V)
+	src.m = make(map[K]V)
 }
 
-func (d *DB[K, V]) CopyTo(db *DB[K, V]) {
-	db.mu.Lock()
-	d.mu.RLock()
-	defer db.mu.Unlock()
-	defer d.mu.RUnlock()
-	for k, v := range d.m {
-		db.m[k] = v
+// CopyTo copies all key-value pairs from the source DB to the provided destination DB.
+//
+// The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
+// The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
+func (src *DB[K, V]) CopyTo(dst *DB[K, V]) {
+	dst.mu.Lock()
+	src.mu.RLock()
+	defer dst.mu.Unlock()
+	defer src.mu.RUnlock()
+	for k, v := range src.m {
+		dst.m[k] = v
 	}
 }
 
+// Keys returns a slice containing the keys of the map in random order.
 func (d *DB[K, V]) Keys() []K {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
