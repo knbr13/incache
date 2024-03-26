@@ -26,3 +26,9 @@ func (d *DB[K, V]) Get(k K) (V, bool) {
 	v, ok := d.m[k]
 	return v, ok
 }
+
+func (d *DB[K, V]) Delete(k K) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	delete(d.m, k)
+}
