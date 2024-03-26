@@ -41,3 +41,11 @@ func (d *DB[K, V]) MoveTo(db *DB[K, V]) {
 	}
 	d.m = make(map[K]V)
 }
+
+func (d *DB[K, V]) CopyTo(db *DB[K, V]) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	for k, v := range d.m {
+		db.m[k] = v
+	}
+}
