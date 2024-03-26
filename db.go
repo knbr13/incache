@@ -33,11 +33,11 @@ func (d *DB[K, V]) Delete(k K) {
 	delete(d.m, k)
 }
 
-func (d *DB[K, V]) MoveTo(db *DB[K, V]) {
+func (d *DB[K, V]) TransferTo(db *DB[K, V]) {
 	db.mu.Lock()
-	d.mu.RLock()
+	d.mu.Lock()
 	defer db.mu.Unlock()
-	defer d.mu.RUnlock()
+	defer d.mu.Unlock()
 	for k, v := range d.m {
 		db.m[k] = v
 	}
