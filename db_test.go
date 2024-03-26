@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestSet(t *testing.T) {
@@ -12,6 +13,27 @@ func TestSet(t *testing.T) {
 	db.Set("key1", "value1")
 	if db.m["key1"].value != "value1" {
 		t.Errorf("Set failed")
+	}
+}
+
+func TestSetWithTimeout(t *testing.T) {
+	db := New[string, string]()
+	key := "test"
+	value := "test value"
+	timeout := time.Second
+
+	db.SetWithTimeout(key, value, timeout)
+
+	v, ok := db.Get(key)
+	if value != v || !ok {
+		t.Errorf("SetWithTimeout failed")
+	}
+
+	time.Sleep(timeout * 7)
+
+	v, ok = db.Get(key)
+	if v != "" || ok {
+		t.Errorf("SetWithTimeout failed")
 	}
 }
 
