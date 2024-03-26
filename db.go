@@ -13,3 +13,9 @@ func New[K comparable, V any]() *DB[K, V] {
 		mu: sync.RWMutex{},
 	}
 }
+
+func (d *DB[K, V]) Set(k K, v V) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.m[k] = v
+}
