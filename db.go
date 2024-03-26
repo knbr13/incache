@@ -25,6 +25,9 @@ func New[K comparable, V any]() *DB[K, V] {
 	return db
 }
 
+// Set adds or updates a key-value pair in the database without setting an expiration time.
+// If the key already exists, its value will be overwritten with the new value.
+// This function is safe for concurrent use.
 func (d *DB[K, V]) Set(k K, v V) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -34,6 +37,9 @@ func (d *DB[K, V]) Set(k K, v V) {
 	}
 }
 
+// SetWithTimeout adds or updates a key-value pair in the database with an expiration time.
+// If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
+// This function is safe for concurrent use.
 func (d *DB[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -105,6 +111,9 @@ func (d *DB[K, V]) Keys() []K {
 	return keys
 }
 
+// expireKeys is a background goroutine that periodically checks for expired keys and removes them from the database.
+// It runs until the Close method is called.
+// This function is not intended to be called directly by users.
 func (d *DB[K, V]) expireKeys() {
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
@@ -124,6 +133,8 @@ func (d *DB[K, V]) expireKeys() {
 	}
 }
 
+// Close signals the expiration goroutine to stop and releases associated resources.
+// It should be called when the database is no longer needed.
 func (d *DB[K, V]) Close() {
 	d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
 }
