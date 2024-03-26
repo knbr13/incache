@@ -1,30 +1,62 @@
 package inmemdb
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type DB[K comparable, V any] struct {
-	m  map[K]V
-	mu sync.RWMutex
+	m      map[K]valueWithTimeout[V]
+	mu     sync.RWMutex
+	stopCh chan struct{} // Channel to signal timeout goroutine to stop
+}
+
+type valueWithTimeout[V any] struct {
+	value    V
+	expireAt *time.Time
 }
 
 func New[K comparable, V any]() *DB[K, V] {
-	return &DB[K, V]{
-		m:  make(map[K]V),
-		mu: sync.RWMutex{},
+	db := &DB[K, V]{
+		m:      make(map[K]valueWithTimeout[V]),
+		stopCh: make(chan struct{}),
 	}
+	go db.expireKeys()
+	return db
 }
 
 func (d *DB[K, V]) Set(k K, v V) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.m[k] = v
+	d.m[k] = valueWithTimeout[V]{
+		value:    v,
+		expireAt: nil,
+	}
+}
+
+func (d *DB[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if timeout > 0 {
+		now := time.Now().Add(timeout)
+		d.m[k] = valueWithTimeout[V]{
+			value:    v,
+			expireAt: &now,
+		}
+	} else {
+		d.m[k] = valueWithTimeout[V]{
+			value:    v,
+			expireAt: nil,
+		}
+	}
 }
 
 func (d *DB[K, V]) Get(k K) (V, bool) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	v, ok := d.m[k]
-	return v, ok
+	return v.value, ok
 }
 
 func (d *DB[K, V]) Delete(k K) {
@@ -45,7 +77,7 @@ func (src *DB[K, V]) TransferTo(dst *DB[K, V]) {
 	for k, v := range src.m {
 		dst.m[k] = v
 	}
-	src.m = make(map[K]V)
+	src.m = make(map[K]valueWithTimeout[V])
 }
 
 // CopyTo copies all key-value pairs from the source DB to the provided destination DB.
@@ -71,4 +103,27 @@ func (d *DB[K, V]) Keys() []K {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+func (d *DB[K, V]) expireKeys() {
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			d.mu.Lock()
+			for k, v := range d.m {
+				if v.expireAt != nil && v.expireAt.Before(time.Now()) {
+					delete(d.m, k)
+				}
+			}
+			d.mu.Unlock()
+		case <-d.stopCh:
+			return
+		}
+	}
+}
+
+func (d *DB[K, V]) Close() {
+	d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
 }

@@ -10,7 +10,7 @@ func TestSet(t *testing.T) {
 	db := New[string, string]()
 
 	db.Set("key1", "value1")
-	if db.m["key1"] != "value1" {
+	if db.m["key1"].value != "value1" {
 		t.Errorf("Set failed")
 	}
 }
