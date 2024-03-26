@@ -19,3 +19,10 @@ func (d *DB[K, V]) Set(k K, v V) {
 	defer d.mu.Unlock()
 	d.m[k] = v
 }
+
+func (d *DB[K, V]) Get(k K) (V, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	v, ok := d.m[k]
+	return v, ok
+}
