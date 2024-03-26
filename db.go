@@ -32,3 +32,12 @@ func (d *DB[K, V]) Delete(k K) {
 	defer d.mu.Unlock()
 	delete(d.m, k)
 }
+
+func (d *DB[K, V]) MoveTo(db *DB[K, V]) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	for k, v := range d.m {
+		db.m[k] = v
+	}
+	d.m = make(map[K]V)
+}
