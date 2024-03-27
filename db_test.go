@@ -167,3 +167,25 @@ func TestKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestClose(t *testing.T) {
+	db := New[string, string]()
+	db.Set("1", "one")
+	db.Set("2", "two")
+	db.SetWithTimeout("3", "three", time.Second)
+
+	db.Close()
+
+	select {
+	case _, ok := <-db.stopCh:
+		if ok {
+			t.Errorf("Close: expiration goroutine did not stop as expected")
+		}
+	default:
+		t.Errorf("Close: expiration goroutine did not stop as expected")
+	}
+
+	if len(db.m) != 0 {
+		t.Errorf("Close: database map is not cleaned up")
+	}
+}
