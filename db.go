@@ -22,6 +22,7 @@ type DB[K comparable, V any] struct {
 	mu           sync.RWMutex
 	stopCh       chan struct{} // Channel to signal timeout goroutine to stop
 	timeInterval time.Duration // Time interval to sleep the goroutine that checks for expired keys
+	expiryEnable bool          // Whether the database can contain keys that have expiry time or not
 }
 
 type valueWithTimeout[V any] struct {
@@ -36,11 +37,16 @@ func New[K comparable, V any](opts ...Option[K, V]) *DB[K, V] {
 		m:            make(map[K]valueWithTimeout[V]),
 		stopCh:       make(chan struct{}),
 		timeInterval: time.Second * 10,
+		expiryEnable: true,
 	}
 	for _, opt := range opts {
 		opt(db)
 	}
-	go db.expireKeys()
+	if db.timeInterval > 0 {
+		go db.expireKeys()
+	} else {
+		db.expiryEnable = false
+	}
 	return db
 }
 
@@ -155,5 +161,9 @@ func (d *DB[K, V]) expireKeys() {
 // Close signals the expiration goroutine to stop and releases associated resources.
 // It should be called when the database is no longer needed.
 func (d *DB[K, V]) Close() {
-	d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
+	if d.expiryEnable {
+		d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
+		close(d.stopCh)
+	}
+	d.m = nil
 }
