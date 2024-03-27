@@ -66,6 +66,10 @@ func (d *DB[K, V]) Set(k K, v V) {
 // If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
 // This function is safe for concurrent use.
 func (d *DB[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
+	if !d.expiryEnable {
+		d.Set(k, v)
+		return
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
