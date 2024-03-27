@@ -162,7 +162,7 @@ func (d *DB[K, V]) expireKeys() {
 	}
 }
 
-// Close signals the expiration goroutine to stop and releases associated resources.
+// Close signals the expiration goroutine to stop.
 // It should be called when the database is no longer needed.
 func (d *DB[K, V]) Close() {
 	if d.expiryEnable {
