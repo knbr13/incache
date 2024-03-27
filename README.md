@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	inmemdb "github.com/knbr13/in-memdb"
 )
@@ -24,10 +25,13 @@ import (
 func main() {
 	// Create a new in-memory database
 	db := inmemdb.New[string, string]()
+	defer db.Close()
 
 	// Set key-value pairs
 	db.Set("key1", "value1")
 	db.Set("key2", "value2")
+
+	db.SetWithTimeout("key3", "value3", time.Second)
 
 	// Get values by key
 	value1, ok1 := db.Get("key1")
@@ -58,6 +62,10 @@ func main() {
 
 	keys = copyDB.Keys()
 	fmt.Println("Keys in copyDB:", keys)
+
+	time.Sleep(time.Second * 11)
+	value3, ok3 := copyDB.Get("key3")
+	fmt.Printf("ok = %v, value = %v\n", ok3, value3) // ok = false, value = 
 }
 ```
 

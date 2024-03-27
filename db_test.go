@@ -29,10 +29,31 @@ func TestSetWithTimeout(t *testing.T) {
 		t.Errorf("SetWithTimeout failed")
 	}
 
-	time.Sleep(timeout * 7)
+	time.Sleep(db.timeInterval + time.Second)
 
 	v, ok = db.Get(key)
 	if v != "" || ok {
+		t.Errorf("SetWithTimeout failed")
+	}
+}
+
+func TestSetValuesWithExpiryDisabled(t *testing.T) {
+	db := New(WithTimeInterval[string, string](0))
+	key := "test"
+	value := "test value"
+	timeout := time.Second
+
+	db.SetWithTimeout(key, value, timeout)
+
+	v, ok := db.Get(key)
+	if value != v || !ok {
+		t.Errorf("SetWithTimeout failed")
+	}
+
+	time.Sleep(timeout)
+
+	v, ok = db.Get(key)
+	if value != v || !ok {
 		t.Errorf("SetWithTimeout failed")
 	}
 }
