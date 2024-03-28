@@ -171,3 +171,10 @@ func (d *DB[K, V]) Close() {
 	}
 	d.m = nil
 }
+
+// Count returns the number of key-value pairs in the database.
+func (d *DB[K, V]) Count() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return len(d.m)
+}
