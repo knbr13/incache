@@ -189,3 +189,22 @@ func TestClose(t *testing.T) {
 		t.Errorf("Close: database map is not cleaned up")
 	}
 }
+
+func TestCount(t *testing.T) {
+	db := New(WithTimeInterval[int, string](time.Second))
+	db.Set(1, "one")
+	db.Set(2, "two")
+	db.SetWithTimeout(3, "three", time.Second)
+	db.SetWithTimeout(4, "four", time.Second)
+	db.SetWithTimeout(5, "five", time.Second)
+
+	count := db.Count()
+	if count != 5 {
+		t.Errorf("Count: expected: %d, got: %d", 5, count)
+	}
+	time.Sleep(time.Second * 2)
+	count = db.Count()
+	if count != 2 {
+		t.Errorf("Count: expected: %d, got: %d", 2, count)
+	}
+}
