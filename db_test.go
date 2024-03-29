@@ -16,6 +16,28 @@ func TestSet(t *testing.T) {
 	}
 }
 
+func TestNotFoundSet(t *testing.T) {
+	db := New[string, string]()
+
+	key := "key1"
+	value := "value1"
+
+	ok := db.NotFoundSet(key, value)
+	if !ok {
+		t.Error("Expected NotFoundSet to return true for a new key")
+	}
+
+	v, ok := db.Get(key)
+	if !ok || v != value {
+		t.Error("Expected value to be added using NotFoundSet")
+	}
+
+	ok = db.NotFoundSet(key, value)
+	if ok {
+		t.Error("Expected NotFoundSet to return false for an existing key")
+	}
+}
+
 func TestSetWithTimeout(t *testing.T) {
 	db := New[string, string]()
 	key := "test"
