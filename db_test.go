@@ -38,6 +38,45 @@ func TestNotFoundSet(t *testing.T) {
 	}
 }
 
+func TestNotFoundSetWithTimeout(t *testing.T) {
+	db := New[string, string]()
+	key := "key1"
+	value := "value1"
+	timeout := time.Second
+
+	ok := db.NotFoundSetWithTimeout(key, value, timeout)
+	if !ok {
+		t.Error("Expected NotFoundSetWithTimeout to return true for a new key")
+	}
+
+	v, ok := db.Get(key)
+	if !ok || v != value {
+		t.Error("Expected value to be added using NotFoundSetWithTimeout")
+	}
+
+	ok = db.NotFoundSetWithTimeout(key, value, timeout)
+	if ok {
+		t.Error("Expected NotFoundSetWithTimeout to return false for an existing key")
+	}
+
+	ok = db.NotFoundSetWithTimeout("key2", "value2", timeout)
+	if !ok {
+		t.Error("Expected NotFoundSetWithTimeout to return true for a new key with timeout")
+	}
+
+	time.Sleep(db.timeInterval + timeout)
+
+	_, ok = db.Get("key2")
+	if ok {
+		t.Error("Expected value to be expired and removed after the specified timeout")
+	}
+
+	ok = db.NotFoundSetWithTimeout("key3", "value3", -time.Second)
+	if !ok {
+		t.Error("Expected NotFoundSetWithTimeout to return true for a new key with negative timeout")
+	}
+}
+
 func TestSetWithTimeout(t *testing.T) {
 	db := New[string, string]()
 	key := "test"
