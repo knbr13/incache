@@ -101,6 +101,38 @@ func (d *DB[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 	}
 }
 
+// NotFoundSetWithTimeout adds a key-value pair to the database with an expiration time if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
+// If the timeout is zero or negative, the key-value pair will not have an expiration time.
+// If expiry is disabled, it behaves like NotFoundSet.
+func (d *DB[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool {
+	if !d.expiryEnable {
+		return d.NotFoundSet(k, v)
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	var ok bool
+	if timeout > 0 {
+		now := time.Now().Add(timeout)
+		_, ok = d.m[k]
+		if !ok {
+			d.m[k] = valueWithTimeout[V]{
+				value:    v,
+				expireAt: &now,
+			}
+		}
+	} else {
+		_, ok = d.m[k]
+		if !ok {
+			d.m[k] = valueWithTimeout[V]{
+				value:    v,
+				expireAt: nil,
+			}
+		}
+	}
+	return !ok
+}
+
 func (d *DB[K, V]) Get(k K) (V, bool) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
