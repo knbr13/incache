@@ -62,6 +62,20 @@ func (d *DB[K, V]) Set(k K, v V) {
 	}
 }
 
+// NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
+func (d *DB[K, V]) NotFoundSet(k K, v V) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	_, ok := d.m[k]
+	if !ok {
+		d.m[k] = valueWithTimeout[V]{
+			value:    v,
+			expireAt: nil,
+		}
+	}
+	return !ok
+}
+
 // SetWithTimeout adds or updates a key-value pair in the database with an expiration time.
 // If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
 // This function is safe for concurrent use.
