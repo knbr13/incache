@@ -33,10 +33,10 @@ type Cache[K comparable, V any] interface {
 	Delete(K)
 
 	// TransferTo transfers all key-value pairs from the source cache to the provided destination cache.
-	TransferTo(*DB[K, V])
+	TransferTo(Cache[K, V])
 
 	// CopyTo copies all key-value pairs from the source cache to the provided destination cache.
-	CopyTo(*DB[K, V])
+	CopyTo(Cache[K, V])
 
 	// Keys returns a slice containing the keys of the cache in arbitrary order.
 	Keys() []K
