@@ -84,20 +84,18 @@ func (d *DB[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 		d.Set(k, v)
 		return
 	}
-	d.mu.Lock()
-	defer d.mu.Unlock()
 
 	if timeout > 0 {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+
 		now := time.Now().Add(timeout)
 		d.m[k] = valueWithTimeout[V]{
 			value:    v,
 			expireAt: &now,
 		}
 	} else {
-		d.m[k] = valueWithTimeout[V]{
-			value:    v,
-			expireAt: nil,
-		}
+		d.Set(k, v)
 	}
 }
 
