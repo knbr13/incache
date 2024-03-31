@@ -72,7 +72,7 @@ func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
 func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
 	switch b.et {
 	case Manual:
-		return newManual[K, V]()
+		return newManual(WithTimeInterval[K, V](b.tmIvl))
 	default:
 		panic("in-memdb: unknown evict-type")
 	}
