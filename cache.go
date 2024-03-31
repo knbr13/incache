@@ -57,6 +57,10 @@ func New(size uint) CacheBuilder {
 	}
 }
 
+func (b *CacheBuilder) EvictType(evictType EvictType) {
+	b.et = evictType
+}
+
 type baseCache[K comparable, V any] struct {
 	m  map[K]valueWithTimeout[V]
 	mu sync.RWMutex
