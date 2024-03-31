@@ -8,7 +8,7 @@ import (
 )
 
 func TestSet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	db.Set("key1", "value1")
 	if db.m["key1"].value != "value1" {
@@ -17,7 +17,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestNotFoundSet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	key := "key1"
 	value := "value1"
@@ -39,7 +39,7 @@ func TestNotFoundSet(t *testing.T) {
 }
 
 func TestNotFoundSetWithTimeout(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 	key := "key1"
 	value := "value1"
 	timeout := time.Second
@@ -78,7 +78,7 @@ func TestNotFoundSetWithTimeout(t *testing.T) {
 }
 
 func TestSetWithTimeout(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 	key := "test"
 	value := "test value"
 	timeout := time.Second
@@ -99,7 +99,7 @@ func TestSetWithTimeout(t *testing.T) {
 }
 
 func TestSetValuesWithExpiryDisabled(t *testing.T) {
-	db := New(WithTimeInterval[string, string](0))
+	db := newManual(WithTimeInterval[string, string](0))
 	key := "test"
 	value := "test value"
 	timeout := time.Second
@@ -120,7 +120,7 @@ func TestSetValuesWithExpiryDisabled(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	db.Set("key1", "value1")
 
@@ -131,7 +131,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetNonExistentKey(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	_, ok := db.Get("nonexistent")
 	if ok {
@@ -140,7 +140,7 @@ func TestGetNonExistentKey(t *testing.T) {
 }
 
 func TestSetConcurrently(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 	var wg sync.WaitGroup
 	numRoutines := 10_000
 
@@ -162,7 +162,7 @@ func TestSetConcurrently(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	db.Set("key1", "value1")
 	db.Delete("key1")
@@ -174,8 +174,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestTransferTo(t *testing.T) {
-	src := New[string, string]()
-	dst := New[string, string]()
+	src := newManual[string, string]()
+	dst := newManual[string, string]()
 
 	src.Set("key1", "value1")
 	src.TransferTo(dst)
@@ -192,8 +192,8 @@ func TestTransferTo(t *testing.T) {
 }
 
 func TestCopyTo(t *testing.T) {
-	src := New[string, string]()
-	dst := New[string, string]()
+	src := newManual[string, string]()
+	dst := newManual[string, string]()
 
 	src.Set("key1", "value1")
 	src.CopyTo(dst)
@@ -210,7 +210,7 @@ func TestCopyTo(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 
 	db.Set("key1", "value1")
 	db.Set("key2", "value2")
@@ -230,7 +230,7 @@ func TestKeys(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string]()
 	db.Set("1", "one")
 	db.Set("2", "two")
 	db.SetWithTimeout("3", "three", time.Second)
@@ -252,7 +252,7 @@ func TestClose(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	db := New(WithTimeInterval[int, string](time.Second))
+	db := newManual(WithTimeInterval[int, string](time.Second))
 	db.Set(1, "one")
 	db.Set(2, "two")
 	db.SetWithTimeout(3, "three", time.Second)
