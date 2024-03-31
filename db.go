@@ -131,11 +131,18 @@ func (d *DB[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool 
 	return !ok
 }
 
-func (d *DB[K, V]) Get(k K) (V, bool) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	v, ok := d.m[k]
-	return v.value, ok
+func (d *DB[K, V]) Get(k K) (v V, b bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	val, ok := d.m[k]
+	if !ok {
+		return
+	}
+	if val.expireAt != nil && val.expireAt.Before(time.Now()) {
+		delete(d.m, k)
+		return
+	}
+	return val.value, ok
 }
 
 func (d *DB[K, V]) Delete(k K) {
