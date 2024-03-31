@@ -45,19 +45,19 @@ type Cache[K comparable, V any] interface {
 	Count() int
 }
 
-type CacheBuilder struct {
+type CacheBuilder[K comparable, V any] struct {
 	et   EvictType
 	size uint
 }
 
-func New(size uint) CacheBuilder {
-	return CacheBuilder{
+func New[K comparable, V any](size uint) CacheBuilder[K, V] {
+	return CacheBuilder[K, V]{
 		size: size,
 		et:   Manual,
 	}
 }
 
-func (b *CacheBuilder) EvictType(evictType EvictType) {
+func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
 	b.et = evictType
 }
 
