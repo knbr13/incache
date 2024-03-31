@@ -43,6 +43,8 @@ type Cache[K comparable, V any] interface {
 
 	// Count returns the number of key-value pairs in the cache.
 	Count() int
+
+	setValueWithTimeout(K, valueWithTimeout[V])
 }
 
 type CacheBuilder[K comparable, V any] struct {
