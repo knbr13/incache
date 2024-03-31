@@ -41,3 +41,9 @@ type Cache[K comparable, V any] interface {
 	// Count returns the number of key-value pairs in the cache.
 	Count() int
 }
+
+type EvictType string
+
+const (
+	Manual EvictType = "manual"
+)
