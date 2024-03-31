@@ -46,8 +46,9 @@ type Cache[K comparable, V any] interface {
 }
 
 type CacheBuilder[K comparable, V any] struct {
-	et   EvictType
-	size uint
+	et    EvictType
+	size  uint
+	tmIvl time.Duration
 }
 
 func New[K comparable, V any](size uint) CacheBuilder[K, V] {
@@ -55,6 +56,11 @@ func New[K comparable, V any](size uint) CacheBuilder[K, V] {
 		size: size,
 		et:   Manual,
 	}
+}
+
+func (cb CacheBuilder[K, V]) TimeInterval(t time.Duration) CacheBuilder[K, V] {
+	cb.tmIvl = t
+	return cb
 }
 
 func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
