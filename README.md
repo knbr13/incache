@@ -23,9 +23,13 @@ import (
 )
 
 func main() {
-	// Create a new in-memory database
-	db := inmemdb.New[string, string]()
-	defer db.Close()
+	// Create a new Cache Builder
+	cb := inmemdb.New[string, string](10)
+
+	// Build the Cache
+	db := cb.Build()
+
+	fmt.Println("keys:", db.Keys())
 
 	// Set key-value pairs
 	db.Set("key1", "value1")
@@ -47,13 +51,16 @@ func main() {
 
 	// Delete a key
 	db.Delete("key1")
+	time.Sleep(time.Second)
 
 	// Transfer data to another database
-	anotherDB := inmemdb.New[string, string]()
+	anotherCB := inmemdb.New[string, string](2)
+	anotherDB := anotherCB.Build()
 	db.TransferTo(anotherDB)
 
 	// Copy data to another database
-	copyDB := inmemdb.New[string, string]()
+	copyCB := inmemdb.New[string, string](2)
+	copyDB := copyCB.Build()
 	anotherDB.CopyTo(copyDB)
 
 	// Retrieve keys
@@ -63,9 +70,9 @@ func main() {
 	keys = copyDB.Keys()
 	fmt.Println("Keys in copyDB:", keys)
 
-	time.Sleep(time.Second * 11)
+	time.Sleep(time.Second)
 	value3, ok3 := copyDB.Get("key3")
-	fmt.Printf("ok = %v, value = %v\n", ok3, value3) // ok = false, value = 
+	fmt.Printf("ok = %v, value = %v\n", ok3, value3) // ok = false, value =
 }
 ```
 
