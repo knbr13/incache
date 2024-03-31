@@ -62,6 +62,12 @@ func (d *MCache[K, V]) Set(k K, v V) {
 	}
 }
 
+func (d *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.m[k] = v
+}
+
 // NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
 func (d *MCache[K, V]) NotFoundSet(k K, v V) bool {
 	d.mu.Lock()
@@ -155,13 +161,11 @@ func (d *MCache[K, V]) Delete(k K) {
 //
 // The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
 // The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
-func (src *MCache[K, V]) TransferTo(dst *MCache[K, V]) {
-	dst.mu.Lock()
+func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 	src.mu.Lock()
-	defer dst.mu.Unlock()
 	defer src.mu.Unlock()
 	for k, v := range src.m {
-		dst.m[k] = v
+		dst.setValueWithTimeout(k, v)
 	}
 	src.m = make(map[K]valueWithTimeout[V])
 }
@@ -170,13 +174,11 @@ func (src *MCache[K, V]) TransferTo(dst *MCache[K, V]) {
 //
 // The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
 // The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
-func (src *MCache[K, V]) CopyTo(dst *MCache[K, V]) {
-	dst.mu.Lock()
+func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
 	src.mu.RLock()
-	defer dst.mu.Unlock()
 	defer src.mu.RUnlock()
 	for k, v := range src.m {
-		dst.m[k] = v
+		dst.setValueWithTimeout(k, v)
 	}
 }
 
