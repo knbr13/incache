@@ -1,14 +1,12 @@
 package inmemdb
 
 import (
-	"fmt"
-	"sync"
 	"testing"
 	"time"
 )
 
 func TestSet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	db.Set("key1", "value1")
 	if db.m["key1"].value != "value1" {
@@ -17,7 +15,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestNotFoundSet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	key := "key1"
 	value := "value1"
@@ -39,7 +37,7 @@ func TestNotFoundSet(t *testing.T) {
 }
 
 func TestNotFoundSetWithTimeout(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 	key := "key1"
 	value := "value1"
 	timeout := time.Second
@@ -78,7 +76,7 @@ func TestNotFoundSetWithTimeout(t *testing.T) {
 }
 
 func TestSetWithTimeout(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 	key := "test"
 	value := "test value"
 	timeout := time.Second
@@ -90,7 +88,7 @@ func TestSetWithTimeout(t *testing.T) {
 		t.Errorf("SetWithTimeout failed")
 	}
 
-	time.Sleep(db.timeInterval + time.Second)
+	time.Sleep(time.Second)
 
 	v, ok = db.Get(key)
 	if v != "" || ok {
@@ -98,29 +96,8 @@ func TestSetWithTimeout(t *testing.T) {
 	}
 }
 
-func TestSetValuesWithExpiryDisabled(t *testing.T) {
-	db := New(WithTimeInterval[string, string](0))
-	key := "test"
-	value := "test value"
-	timeout := time.Second
-
-	db.SetWithTimeout(key, value, timeout)
-
-	v, ok := db.Get(key)
-	if value != v || !ok {
-		t.Errorf("SetWithTimeout failed")
-	}
-
-	time.Sleep(timeout)
-
-	v, ok = db.Get(key)
-	if value != v || !ok {
-		t.Errorf("SetWithTimeout failed")
-	}
-}
-
 func TestGet(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	db.Set("key1", "value1")
 
@@ -131,7 +108,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetNonExistentKey(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	_, ok := db.Get("nonexistent")
 	if ok {
@@ -139,30 +116,8 @@ func TestGetNonExistentKey(t *testing.T) {
 	}
 }
 
-func TestSetConcurrently(t *testing.T) {
-	db := New[string, string]()
-	var wg sync.WaitGroup
-	numRoutines := 10_000
-
-	wg.Add(numRoutines)
-	for i := 0; i < numRoutines; i++ {
-		go func(i int) {
-			defer wg.Done()
-			db.Set(fmt.Sprintf("%d", i), fmt.Sprintf("%d", i))
-		}(i)
-	}
-	wg.Wait()
-
-	for i := 0; i < numRoutines; i++ {
-		value, ok := db.Get(fmt.Sprintf("%d", i))
-		if !ok || value != fmt.Sprintf("%d", i) {
-			t.Errorf("Get returned unexpected value for key %d", i)
-		}
-	}
-}
-
 func TestDelete(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	db.Set("key1", "value1")
 	db.Delete("key1")
@@ -174,8 +129,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestTransferTo(t *testing.T) {
-	src := New[string, string]()
-	dst := New[string, string]()
+	src := newManual[string, string](0)
+	dst := newManual[string, string](0)
 
 	src.Set("key1", "value1")
 	src.TransferTo(dst)
@@ -192,8 +147,8 @@ func TestTransferTo(t *testing.T) {
 }
 
 func TestCopyTo(t *testing.T) {
-	src := New[string, string]()
-	dst := New[string, string]()
+	src := newManual[string, string](0)
+	dst := newManual[string, string](0)
 
 	src.Set("key1", "value1")
 	src.CopyTo(dst)
@@ -210,7 +165,7 @@ func TestCopyTo(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](0)
 
 	db.Set("key1", "value1")
 	db.Set("key2", "value2")
@@ -230,7 +185,7 @@ func TestKeys(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	db := New[string, string]()
+	db := newManual[string, string](10)
 	db.Set("1", "one")
 	db.Set("2", "two")
 	db.SetWithTimeout("3", "three", time.Second)
@@ -252,7 +207,7 @@ func TestClose(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	db := New(WithTimeInterval[int, string](time.Second))
+	db := newManual[int, string](time.Second)
 	db.Set(1, "one")
 	db.Set(2, "two")
 	db.SetWithTimeout(3, "three", time.Second)

@@ -1,6 +1,9 @@
 package inmemdb
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 // Cache represents a generic caching interface for key-value pairs.
 // Different cache implementations can be created by implementing this interface.
@@ -30,14 +33,58 @@ type Cache[K comparable, V any] interface {
 	Delete(K)
 
 	// TransferTo transfers all key-value pairs from the source cache to the provided destination cache.
-	TransferTo(*DB[K, V])
+	TransferTo(Cache[K, V])
 
 	// CopyTo copies all key-value pairs from the source cache to the provided destination cache.
-	CopyTo(*DB[K, V])
+	CopyTo(Cache[K, V])
 
 	// Keys returns a slice containing the keys of the cache in arbitrary order.
 	Keys() []K
 
 	// Count returns the number of key-value pairs in the cache.
 	Count() int
+
+	setValueWithTimeout(K, valueWithTimeout[V])
 }
+
+type CacheBuilder[K comparable, V any] struct {
+	et    EvictType
+	size  uint
+	tmIvl time.Duration
+}
+
+func New[K comparable, V any](size uint) CacheBuilder[K, V] {
+	return CacheBuilder[K, V]{
+		size: size,
+		et:   Manual,
+	}
+}
+
+func (cb CacheBuilder[K, V]) TimeInterval(t time.Duration) CacheBuilder[K, V] {
+	cb.tmIvl = t
+	return cb
+}
+
+func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
+	b.et = evictType
+}
+
+func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
+	switch b.et {
+	case Manual:
+		return newManual[K, V](b.tmIvl)
+	default:
+		panic("in-memdb: unknown evict-type")
+	}
+}
+
+type baseCache[K comparable, V any] struct {
+	m  map[K]valueWithTimeout[V]
+	mu sync.RWMutex
+}
+
+type EvictType string
+
+const (
+	Manual EvictType = "manual"
+)
