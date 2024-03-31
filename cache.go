@@ -1,6 +1,9 @@
 package inmemdb
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 // Cache represents a generic caching interface for key-value pairs.
 // Different cache implementations can be created by implementing this interface.
@@ -40,6 +43,11 @@ type Cache[K comparable, V any] interface {
 
 	// Count returns the number of key-value pairs in the cache.
 	Count() int
+}
+
+type baseCache[K comparable, V any] struct {
+	m  map[K]valueWithTimeout[V]
+	mu sync.RWMutex
 }
 
 type EvictType string
