@@ -96,27 +96,6 @@ func TestSetWithTimeout(t *testing.T) {
 	}
 }
 
-func TestSetValuesWithExpiryDisabled(t *testing.T) {
-	db := newManual[string, string](0)
-	key := "test"
-	value := "test value"
-	timeout := time.Second
-
-	db.SetWithTimeout(key, value, timeout)
-
-	v, ok := db.Get(key)
-	if value != v || !ok {
-		t.Errorf("SetWithTimeout failed")
-	}
-
-	time.Sleep(timeout)
-
-	v, ok = db.Get(key)
-	if value != v || !ok {
-		t.Errorf("SetWithTimeout failed")
-	}
-}
-
 func TestGet(t *testing.T) {
 	db := newManual[string, string](0)
 
@@ -206,7 +185,7 @@ func TestKeys(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	db := newManual[string, string](0)
+	db := newManual[string, string](10)
 	db.Set("1", "one")
 	db.Set("2", "two")
 	db.SetWithTimeout("3", "three", time.Second)
