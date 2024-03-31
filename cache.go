@@ -67,6 +67,19 @@ func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
 	b.et = evictType
 }
 
+func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
+	ti := b.tmIvl
+	if ti == 0 {
+		ti = 10 * time.Second
+	}
+	switch b.et {
+	case Manual:
+		return newManual[K, V](WithTimeInterval[K, V](ti))
+	default:
+		panic("in-memdb: unknown evict-type")
+	}
+}
+
 type baseCache[K comparable, V any] struct {
 	m  map[K]valueWithTimeout[V]
 	mu sync.RWMutex
