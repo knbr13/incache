@@ -1,26 +1,14 @@
 package inmemdb
 
 import (
+	"fmt"
 	"time"
 )
-
-// Option is a functional option type for configuring the behavior of the in-memory database.
-type Option[K comparable, V any] func(*MCache[K, V])
-
-// WithTimeInterval sets the time interval for the expiration goroutine to sleep before checking for expired keys again.
-// It accepts a time.Duration value representing the interval duration.
-// By default, the time interval is set to 10 seconds.
-func WithTimeInterval[K comparable, V any](t time.Duration) Option[K, V] {
-	return func(db *MCache[K, V]) {
-		db.timeInterval = t
-	}
-}
 
 type MCache[K comparable, V any] struct {
 	baseCache[K, V]
 	stopCh       chan struct{} // Channel to signal timeout goroutine to stop
 	timeInterval time.Duration // Time interval to sleep the goroutine that checks for expired keys
-	expiryEnable bool          // Whether the database can contain keys that have expiry time or not
 }
 
 type valueWithTimeout[V any] struct {
@@ -30,22 +18,16 @@ type valueWithTimeout[V any] struct {
 
 // New creates a new in-memory database instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
-func newManual[K comparable, V any](opts ...Option[K, V]) *MCache[K, V] {
+func newManual[K comparable, V any](timeInterval time.Duration) *MCache[K, V] {
 	db := &MCache[K, V]{
 		baseCache: baseCache[K, V]{
 			m: make(map[K]valueWithTimeout[V]),
 		},
 		stopCh:       make(chan struct{}),
-		timeInterval: time.Second * 10,
-		expiryEnable: true,
-	}
-	for _, opt := range opts {
-		opt(db)
+		timeInterval: timeInterval,
 	}
 	if db.timeInterval > 0 {
 		go db.expireKeys()
-	} else {
-		db.expiryEnable = false
 	}
 	return db
 }
@@ -86,11 +68,6 @@ func (d *MCache[K, V]) NotFoundSet(k K, v V) bool {
 // If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
 // This function is safe for concurrent use.
 func (d *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
-	if !d.expiryEnable {
-		d.Set(k, v)
-		return
-	}
-
 	if timeout > 0 {
 		d.mu.Lock()
 		defer d.mu.Unlock()
@@ -109,9 +86,6 @@ func (d *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 // If the timeout is zero or negative, the key-value pair will not have an expiration time.
 // If expiry is disabled, it behaves like NotFoundSet.
 func (d *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool {
-	if !d.expiryEnable {
-		return d.NotFoundSet(k, v)
-	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -144,6 +118,7 @@ func (d *MCache[K, V]) Get(k K) (v V, b bool) {
 	if !ok {
 		return
 	}
+	fmt.Printf("v: %+v\n", val)
 	if val.expireAt != nil && val.expireAt.Before(time.Now()) {
 		delete(d.m, k)
 		return
@@ -218,7 +193,7 @@ func (d *MCache[K, V]) expireKeys() {
 // Close signals the expiration goroutine to stop.
 // It should be called when the database is no longer needed.
 func (d *MCache[K, V]) Close() {
-	if d.expiryEnable {
+	if d.timeInterval > 0 {
 		d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
 		close(d.stopCh)
 	}
