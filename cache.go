@@ -45,6 +45,11 @@ type Cache[K comparable, V any] interface {
 	Count() int
 }
 
+type CacheBuilder struct {
+	et   EvictType
+	size uint
+}
+
 type baseCache[K comparable, V any] struct {
 	m  map[K]valueWithTimeout[V]
 	mu sync.RWMutex
