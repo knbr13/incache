@@ -1,7 +1,6 @@
 package inmemdb
 
 import (
-	"sync"
 	"time"
 )
 
@@ -18,8 +17,7 @@ func WithTimeInterval[K comparable, V any](t time.Duration) Option[K, V] {
 }
 
 type DB[K comparable, V any] struct {
-	m            map[K]valueWithTimeout[V]
-	mu           sync.RWMutex
+	baseCache[K, V]
 	stopCh       chan struct{} // Channel to signal timeout goroutine to stop
 	timeInterval time.Duration // Time interval to sleep the goroutine that checks for expired keys
 	expiryEnable bool          // Whether the database can contain keys that have expiry time or not
@@ -32,9 +30,11 @@ type valueWithTimeout[V any] struct {
 
 // New creates a new in-memory database instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
-func New[K comparable, V any](opts ...Option[K, V]) *DB[K, V] {
+func newManual[K comparable, V any](opts ...Option[K, V]) *DB[K, V] {
 	db := &DB[K, V]{
-		m:            make(map[K]valueWithTimeout[V]),
+		baseCache: baseCache[K, V]{
+			m: make(map[K]valueWithTimeout[V]),
+		},
 		stopCh:       make(chan struct{}),
 		timeInterval: time.Second * 10,
 		expiryEnable: true,
