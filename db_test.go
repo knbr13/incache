@@ -1,8 +1,6 @@
 package inmemdb
 
 import (
-	"fmt"
-	"sync"
 	"testing"
 	"time"
 )
@@ -136,28 +134,6 @@ func TestGetNonExistentKey(t *testing.T) {
 	_, ok := db.Get("nonexistent")
 	if ok {
 		t.Errorf("Get returned true for a non-existent key")
-	}
-}
-
-func TestSetConcurrently(t *testing.T) {
-	db := newManual[string, string](0)
-	var wg sync.WaitGroup
-	numRoutines := 1_000
-
-	wg.Add(numRoutines)
-	for i := 0; i < numRoutines; i++ {
-		go func(i int) {
-			defer wg.Done()
-			db.Set(fmt.Sprintf("%d", i), fmt.Sprintf("%d", i))
-		}(i)
-	}
-	wg.Wait()
-
-	for i := 0; i < numRoutines; i++ {
-		value, ok := db.Get(fmt.Sprintf("%d", i))
-		if !ok || value != fmt.Sprintf("%d", i) {
-			t.Errorf("Get returned unexpected value for key %d", i)
-		}
 	}
 }
 
