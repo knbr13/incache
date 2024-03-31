@@ -1,7 +1,6 @@
 package inmemdb
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -118,7 +117,6 @@ func (d *MCache[K, V]) Get(k K) (v V, b bool) {
 	if !ok {
 		return
 	}
-	fmt.Printf("v: %+v\n", val)
 	if val.expireAt != nil && val.expireAt.Before(time.Now()) {
 		delete(d.m, k)
 		return
@@ -163,6 +161,10 @@ func (d *MCache[K, V]) Keys() []K {
 	defer d.mu.RUnlock()
 	keys := make([]K, 0, len(d.m))
 	for k := range d.m {
+		// if v.expireAt != nil && v.expireAt.Before(time.Now()) {
+		// 	delete(d.m, k)
+		// 	continue
+		// }
 		keys = append(keys, k)
 	}
 	return keys
