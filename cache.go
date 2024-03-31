@@ -50,6 +50,13 @@ type CacheBuilder struct {
 	size uint
 }
 
+func New(size uint) CacheBuilder {
+	return CacheBuilder{
+		size: size,
+		et:   Manual,
+	}
+}
+
 type baseCache[K comparable, V any] struct {
 	m  map[K]valueWithTimeout[V]
 	mu sync.RWMutex
