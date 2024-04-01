@@ -1,7 +1,6 @@
 package inmemdb
 
 import (
-	"sync"
 	"time"
 )
 
@@ -76,11 +75,6 @@ func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
 	default:
 		panic("in-memdb: unknown evict-type")
 	}
-}
-
-type baseCache[K comparable, V any] struct {
-	m  map[K]valueWithTimeout[V]
-	mu sync.RWMutex
 }
 
 type EvictType string
