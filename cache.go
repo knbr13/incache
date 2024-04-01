@@ -53,14 +53,14 @@ type CacheBuilder[K comparable, V any] struct {
 	tmIvl time.Duration
 }
 
-func New[K comparable, V any](size uint) CacheBuilder[K, V] {
-	return CacheBuilder[K, V]{
+func New[K comparable, V any](size uint) *CacheBuilder[K, V] {
+	return &CacheBuilder[K, V]{
 		size: size,
 		et:   Manual,
 	}
 }
 
-func (cb CacheBuilder[K, V]) TimeInterval(t time.Duration) CacheBuilder[K, V] {
+func (cb *CacheBuilder[K, V]) TimeInterval(t time.Duration) *CacheBuilder[K, V] {
 	cb.tmIvl = t
 	return cb
 }
