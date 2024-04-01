@@ -157,21 +157,17 @@ func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
 
 // Keys returns a slice containing the keys of the map in random order.
 func (d *MCache[K, V]) Keys() []K {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 
 	keys := make([]K, len(d.m))
-	i := len(d.m) - 1
+	var i uint
 
-	for k, v := range d.m {
-		if v.expireAt != nil && v.expireAt.Before(time.Now()) {
-			delete(d.m, k)
-			continue
-		}
+	for k := range d.m {
 		keys[i] = k
-		i--
+		i++
 	}
-	return keys[i+1:]
+	return keys
 }
 
 // expireKeys is a background goroutine that periodically checks for expired keys and removes them from the database.
