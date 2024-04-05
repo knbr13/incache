@@ -45,6 +45,8 @@ type Cache[K comparable, V any] interface {
 	Count() int
 
 	setValueWithTimeout(K, valueWithTimeout[V])
+
+	evict(i int)
 }
 
 type CacheBuilder[K comparable, V any] struct {
