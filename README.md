@@ -24,7 +24,7 @@ import (
 
 func main() {
 	// Create a new Cache Builder
-	cb := inmemdb.New[string, string](10)
+	cb := inmemdb.New[string, string](3) // 3 is the maximum number of key-value pairs the cache can hold
 
 	// Build the Cache
 	db := cb.Build()
@@ -51,7 +51,6 @@ func main() {
 
 	// Delete a key
 	db.Delete("key1")
-	time.Sleep(time.Second)
 
 	// Transfer data to another database
 	anotherCB := inmemdb.New[string, string](2)
