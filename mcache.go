@@ -55,17 +55,35 @@ func (c *MCache[K, V]) Set(k K, v V) {
 }
 
 func (c *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
+	if c.size == 0 {
+		return
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if len(c.m) == int(c.size) {
+		c.evict(1)
+	}
+
 	c.m[k] = v
 }
 
 // NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
 func (c *MCache[K, V]) NotFoundSet(k K, v V) bool {
+	if c.size == 0 {
+		return false
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	_, ok := c.m[k]
 	if !ok {
+		if len(c.m) == int(c.size) {
+			c.evict(1)
+		}
+
 		c.m[k] = valueWithTimeout[V]{
 			value:    v,
 			expireAt: nil,
@@ -78,9 +96,16 @@ func (c *MCache[K, V]) NotFoundSet(k K, v V) bool {
 // If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
 // This function is safe for concurrent use.
 func (c *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
+	if c.size == 0 {
+		return
+	}
 	if timeout > 0 {
 		c.mu.Lock()
 		defer c.mu.Unlock()
+
+		if len(c.m) == int(c.size) {
+			c.evict(1)
+		}
 
 		now := time.Now().Add(timeout)
 		c.m[k] = valueWithTimeout[V]{
@@ -96,6 +121,10 @@ func (c *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 // If the timeout is zero or negative, the key-value pair will not have an expiration time.
 // If expiry is disabled, it behaves like NotFoundSet.
 func (c *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool {
+	if c.size == 0 {
+		return false
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -104,6 +133,10 @@ func (c *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) b
 		now := time.Now().Add(timeout)
 		_, ok = c.m[k]
 		if !ok {
+			if len(c.m) == int(c.size) {
+				c.evict(1)
+			}
+
 			c.m[k] = valueWithTimeout[V]{
 				value:    v,
 				expireAt: &now,
@@ -112,6 +145,10 @@ func (c *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) b
 	} else {
 		_, ok = c.m[k]
 		if !ok {
+			if len(c.m) == int(c.size) {
+				c.evict(1)
+			}
+
 			c.m[k] = valueWithTimeout[V]{
 				value:    v,
 				expireAt: nil,
