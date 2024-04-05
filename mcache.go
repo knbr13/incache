@@ -37,8 +37,17 @@ func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K,
 // If the key already exists, its value will be overwritten with the new value.
 // This function is safe for concurrent use.
 func (d *MCache[K, V]) Set(k K, v V) {
+	if d.size == 0 {
+		return
+	}
+
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
+	if len(d.m) == int(d.size) {
+		d.evict(1)
+	}
+
 	d.m[k] = valueWithTimeout[V]{
 		value:    v,
 		expireAt: nil,
@@ -209,4 +218,26 @@ func (d *MCache[K, V]) Count() int {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return len(d.m)
+}
+
+func (c *MCache[K, V]) evict(i int) {
+	var counter int
+	for k, v := range c.m {
+		if counter == i {
+			break
+		}
+		if v.expireAt != nil && !v.expireAt.After(time.Now()) {
+			delete(c.m, k)
+			counter++
+		}
+	}
+	if i > len(c.m) {
+		i = len(c.m)
+	}
+	for counter < i {
+		for k := range c.m {
+			delete(c.m, k)
+			counter++
+		}
+	}
 }
