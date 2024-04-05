@@ -36,37 +36,37 @@ func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K,
 // Set adds or updates a key-value pair in the database without setting an expiration time.
 // If the key already exists, its value will be overwritten with the new value.
 // This function is safe for concurrent use.
-func (d *MCache[K, V]) Set(k K, v V) {
-	if d.size == 0 {
+func (c *MCache[K, V]) Set(k K, v V) {
+	if c.size == 0 {
 		return
 	}
 
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	if len(d.m) == int(d.size) {
-		d.evict(1)
+	if len(c.m) == int(c.size) {
+		c.evict(1)
 	}
 
-	d.m[k] = valueWithTimeout[V]{
+	c.m[k] = valueWithTimeout[V]{
 		value:    v,
 		expireAt: nil,
 	}
 }
 
-func (d *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.m[k] = v
+func (c *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.m[k] = v
 }
 
 // NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
-func (d *MCache[K, V]) NotFoundSet(k K, v V) bool {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	_, ok := d.m[k]
+func (c *MCache[K, V]) NotFoundSet(k K, v V) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_, ok := c.m[k]
 	if !ok {
-		d.m[k] = valueWithTimeout[V]{
+		c.m[k] = valueWithTimeout[V]{
 			value:    v,
 			expireAt: nil,
 		}
@@ -77,42 +77,42 @@ func (d *MCache[K, V]) NotFoundSet(k K, v V) bool {
 // SetWithTimeout adds or updates a key-value pair in the database with an expiration time.
 // If the timeout duration is zero or negative, the key-value pair will not have an expiration time.
 // This function is safe for concurrent use.
-func (d *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
+func (c *MCache[K, V]) SetWithTimeout(k K, v V, timeout time.Duration) {
 	if timeout > 0 {
-		d.mu.Lock()
-		defer d.mu.Unlock()
+		c.mu.Lock()
+		defer c.mu.Unlock()
 
 		now := time.Now().Add(timeout)
-		d.m[k] = valueWithTimeout[V]{
+		c.m[k] = valueWithTimeout[V]{
 			value:    v,
 			expireAt: &now,
 		}
 	} else {
-		d.Set(k, v)
+		c.Set(k, v)
 	}
 }
 
 // NotFoundSetWithTimeout adds a key-value pair to the database with an expiration time if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
 // If the timeout is zero or negative, the key-value pair will not have an expiration time.
 // If expiry is disabled, it behaves like NotFoundSet.
-func (d *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (c *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	var ok bool
 	if timeout > 0 {
 		now := time.Now().Add(timeout)
-		_, ok = d.m[k]
+		_, ok = c.m[k]
 		if !ok {
-			d.m[k] = valueWithTimeout[V]{
+			c.m[k] = valueWithTimeout[V]{
 				value:    v,
 				expireAt: &now,
 			}
 		}
 	} else {
-		_, ok = d.m[k]
+		_, ok = c.m[k]
 		if !ok {
-			d.m[k] = valueWithTimeout[V]{
+			c.m[k] = valueWithTimeout[V]{
 				value:    v,
 				expireAt: nil,
 			}
@@ -121,24 +121,24 @@ func (d *MCache[K, V]) NotFoundSetWithTimeout(k K, v V, timeout time.Duration) b
 	return !ok
 }
 
-func (d *MCache[K, V]) Get(k K) (v V, b bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	val, ok := d.m[k]
+func (c *MCache[K, V]) Get(k K) (v V, b bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	val, ok := c.m[k]
 	if !ok {
 		return
 	}
 	if val.expireAt != nil && val.expireAt.Before(time.Now()) {
-		delete(d.m, k)
+		delete(c.m, k)
 		return
 	}
 	return val.value, ok
 }
 
-func (d *MCache[K, V]) Delete(k K) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	delete(d.m, k)
+func (c *MCache[K, V]) Delete(k K) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.m, k)
 }
 
 // TransferTo transfers all key-value pairs from the source DB to the provided destination DB.
@@ -167,14 +167,14 @@ func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
 }
 
 // Keys returns a slice containing the keys of the map in random order.
-func (d *MCache[K, V]) Keys() []K {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
+func (c *MCache[K, V]) Keys() []K {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	keys := make([]K, len(d.m))
+	keys := make([]K, len(c.m))
 	var i uint
 
-	for k := range d.m {
+	for k := range c.m {
 		keys[i] = k
 		i++
 	}
@@ -182,42 +182,42 @@ func (d *MCache[K, V]) Keys() []K {
 }
 
 // expireKeys is a background goroutine that periodically checks for expired keys and removes them from the database.
-// It runs until the Close method is called.
+// It runs until the Close method is callec.
 // This function is not intended to be called directly by users.
-func (d *MCache[K, V]) expireKeys() {
-	ticker := time.NewTicker(d.timeInterval)
+func (c *MCache[K, V]) expireKeys() {
+	ticker := time.NewTicker(c.timeInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			d.mu.Lock()
-			for k, v := range d.m {
+			c.mu.Lock()
+			for k, v := range c.m {
 				if v.expireAt != nil && v.expireAt.Before(time.Now()) {
-					delete(d.m, k)
+					delete(c.m, k)
 				}
 			}
-			d.mu.Unlock()
-		case <-d.stopCh:
+			c.mu.Unlock()
+		case <-c.stopCh:
 			return
 		}
 	}
 }
 
 // Close signals the expiration goroutine to stop.
-// It should be called when the database is no longer needed.
-func (d *MCache[K, V]) Close() {
-	if d.timeInterval > 0 {
-		d.stopCh <- struct{}{} // Signal the expiration goroutine to stop
-		close(d.stopCh)
+// It should be called when the database is no longer needec.
+func (c *MCache[K, V]) Close() {
+	if c.timeInterval > 0 {
+		c.stopCh <- struct{}{} // Signal the expiration goroutine to stop
+		close(c.stopCh)
 	}
-	d.m = nil
+	c.m = nil
 }
 
 // Count returns the number of key-value pairs in the database.
-func (d *MCache[K, V]) Count() int {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return len(d.m)
+func (c *MCache[K, V]) Count() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return len(c.m)
 }
 
 func (c *MCache[K, V]) evict(i int) {
