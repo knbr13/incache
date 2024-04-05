@@ -1,6 +1,7 @@
 package inmemdb
 
 import (
+	"sync"
 	"time"
 )
 
@@ -71,10 +72,15 @@ func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
 func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
 	switch b.et {
 	case Manual:
-		return newManual[K, V](b.tmIvl)
+		return newManual[K, V](b)
 	default:
 		panic("in-memdb: unknown evict-type")
 	}
+}
+
+type baseCache struct {
+	mu   sync.RWMutex
+	size uint
 }
 
 type EvictType string

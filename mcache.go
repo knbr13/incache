@@ -1,13 +1,12 @@
 package inmemdb
 
 import (
-	"sync"
 	"time"
 )
 
 type MCache[K comparable, V any] struct {
+	baseCache
 	m            map[K]valueWithTimeout[V]
-	mu           sync.RWMutex
 	stopCh       chan struct{} // Channel to signal timeout goroutine to stop
 	timeInterval time.Duration // Time interval to sleep the goroutine that checks for expired keys
 }
@@ -19,11 +18,14 @@ type valueWithTimeout[V any] struct {
 
 // New creates a new in-memory database instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
-func newManual[K comparable, V any](timeInterval time.Duration) *MCache[K, V] {
+func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K, V] {
 	db := &MCache[K, V]{
 		m:            make(map[K]valueWithTimeout[V]),
 		stopCh:       make(chan struct{}),
-		timeInterval: timeInterval,
+		timeInterval: cacheBuilder.tmIvl,
+		baseCache: baseCache{
+			size: cacheBuilder.size,
+		},
 	}
 	if db.timeInterval > 0 {
 		go db.expireKeys()
