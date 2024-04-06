@@ -118,6 +118,26 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	cb := New[string, string](3)
+
+	db := cb.Build()
+
+	db.Set("key1", "value1")
+	db.Set("key2", "value2")
+	db.SetWithTimeout("key3", "value3", time.Millisecond)
+
+	if m := db.GetAll(); len(m) != 3 {
+		t.Errorf("GetAll returned unexpected number of keys: %d", len(m))
+	}
+
+	time.Sleep(time.Millisecond * 2)
+
+	if m := db.GetAll(); len(m) != 2 {
+		t.Errorf("GetAll returned unexpected number of keys: %d", len(m))
+	}
+}
+
 func TestGetNonExistentKey(t *testing.T) {
 	db := newManual[string, string](&CacheBuilder[string, string]{
 		size: 10,
