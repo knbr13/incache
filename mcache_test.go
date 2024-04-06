@@ -208,7 +208,7 @@ func TestKeys(t *testing.T) {
 	}
 }
 
-func TestClose(t *testing.T) {
+func TestPurge(t *testing.T) {
 	db := newManual[string, string](&CacheBuilder[string, string]{
 		size:  10,
 		tmIvl: 14,
@@ -217,7 +217,7 @@ func TestClose(t *testing.T) {
 	db.Set("2", "two")
 	db.SetWithTimeout("3", "three", time.Second)
 
-	db.Close()
+	db.Purge()
 
 	select {
 	case _, ok := <-db.stopCh:
