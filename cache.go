@@ -1,4 +1,4 @@
-package inmemdb
+package incache
 
 import (
 	"sync"
@@ -79,7 +79,7 @@ func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
 	case Manual:
 		return newManual[K, V](b)
 	default:
-		panic("in-memdb: unknown evict-type")
+		panic("incache: unknown evict-type")
 	}
 }
 

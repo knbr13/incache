@@ -1,13 +1,13 @@
-## in-memdb
+## incache
 
-The `inmemdb` package provides a simple in-memory database implementation in Go. It can be used as a package in other Go projects to store key-value pairs in memory. The package is safe to use concurrently with multiple goroutines.
+The `incache` package provides a simple cache implementation in Go. It can be used as a package in other Go projects to store key-value pairs in memory. The package is safe to use concurrently with multiple goroutines.
 
 ### Installation
 
 To use this package in your Go project, you can install it using `go get`:
 
 ```bash
-go get github.com/knbr13/inmemdb
+go get github.com/knbr13/incache
 ```
 
 ### Usage
@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"time"
 
-	inmemdb "github.com/knbr13/in-memdb"
+	incache "github.com/knbr13/incache"
 )
 
 func main() {
 	// Create a new Cache Builder
-	cb := inmemdb.New[string, string](3) // 3 is the maximum number of key-value pairs the cache can hold
+	cb := incache.New[string, string](3) // 3 is the maximum number of key-value pairs the cache can hold
 
 	// Build the Cache
 	db := cb.Build()
@@ -53,12 +53,12 @@ func main() {
 	db.Delete("key1")
 
 	// Transfer data to another database
-	anotherCB := inmemdb.New[string, string](2)
+	anotherCB := incache.New[string, string](2)
 	anotherDB := anotherCB.Build()
 	db.TransferTo(anotherDB)
 
 	// Copy data to another database
-	copyCB := inmemdb.New[string, string](2)
+	copyCB := incache.New[string, string](2)
 	copyDB := copyCB.Build()
 	anotherDB.CopyTo(copyDB)
 

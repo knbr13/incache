@@ -1,4 +1,4 @@
-package inmemdb
+package incache
 
 import (
 	"time"
@@ -16,7 +16,7 @@ type valueWithTimeout[V any] struct {
 	expireAt *time.Time
 }
 
-// New creates a new in-memory database instance with optional configuration provided by the specified options.
+// New creates a new cache instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
 func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K, V] {
 	db := &MCache[K, V]{
@@ -240,7 +240,6 @@ func (c *MCache[K, V]) expireKeys() {
 	}
 }
 
-// Purge clears the cache completely.
 func (c *MCache[K, V]) Purge() {
 	if c.timeInterval > 0 {
 		c.stopCh <- struct{}{} // Signal the expiration goroutine to stop

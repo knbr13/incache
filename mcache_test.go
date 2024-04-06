@@ -1,4 +1,4 @@
-package inmemdb
+package incache
 
 import (
 	"testing"
