@@ -1,6 +1,7 @@
 package incache
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -252,5 +253,29 @@ func TestCount(t *testing.T) {
 	count = db.Count()
 	if count != 2 {
 		t.Errorf("Count: expected: %d, got: %d", 2, count)
+	}
+}
+
+func TestEvict(t *testing.T) {
+	c := newManual(&CacheBuilder[string, string]{
+		et:   Manual,
+		size: 3,
+	})
+
+	c.Set("1", "one")
+	c.Set("2", "two")
+	c.Set("3", "three")
+	c.Set("4", "four")
+
+	fmt.Println(c.Keys())
+
+	if count := c.Count(); count != 3 {
+		t.Errorf("Count: expected: %d, got: %d", 3, count)
+	}
+
+	c.evict(2)
+
+	if count := c.Count(); count != 1 {
+		t.Errorf("Count: expected: %d, got: %d", 1, count)
 	}
 }
