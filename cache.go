@@ -41,6 +41,9 @@ type Cache[K comparable, V any] interface {
 	// Keys returns a slice containing the keys of the cache in arbitrary order.
 	Keys() []K
 
+	// Purge clears the cache completely.
+	Purge()
+
 	// Count returns the number of key-value pairs in the cache.
 	Count() int
 
