@@ -172,6 +172,18 @@ func (c *MCache[K, V]) Get(k K) (v V, b bool) {
 	return val.value, ok
 }
 
+func (c *MCache[K, V]) GetAll() map[K]V {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	m := make(map[K]V)
+	for k, v := range c.m {
+		if v.expireAt == nil || !v.expireAt.Before(time.Now()) {
+			m[k] = v.value
+		}
+	}
+	return m
+}
+
 func (c *MCache[K, V]) Delete(k K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
