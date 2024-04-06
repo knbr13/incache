@@ -240,9 +240,8 @@ func (c *MCache[K, V]) expireKeys() {
 	}
 }
 
-// Close signals the expiration goroutine to stop.
-// It should be called when the database is no longer needec.
-func (c *MCache[K, V]) Close() {
+// Purge clears the cache completely.
+func (c *MCache[K, V]) Purge() {
 	if c.timeInterval > 0 {
 		c.stopCh <- struct{}{} // Signal the expiration goroutine to stop
 		close(c.stopCh)
