@@ -269,10 +269,10 @@ func (c *MCache[K, V]) evict(i int) {
 	if i > len(c.m) {
 		i = len(c.m)
 	}
-	for counter < i {
+	for ; counter < i; counter++ {
 		for k := range c.m {
 			delete(c.m, k)
-			counter++
+			break
 		}
 	}
 }
