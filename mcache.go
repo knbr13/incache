@@ -6,9 +6,9 @@ import (
 
 type MCache[K comparable, V any] struct {
 	baseCache
-	m            map[K]valueWithTimeout[V]
-	stopCh       chan struct{} // Channel to signal timeout goroutine to stop
-	timeInterval time.Duration // Time interval to sleep the goroutine that checks for expired keys
+	m            map[K]valueWithTimeout[V] // where the key-value pairs are stored
+	stopCh       chan struct{}             // Channel to signal timeout goroutine to stop
+	timeInterval time.Duration             // Time interval to sleep the goroutine that checks for expired keys
 }
 
 type valueWithTimeout[V any] struct {
@@ -19,7 +19,7 @@ type valueWithTimeout[V any] struct {
 // New creates a new cache instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
 func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K, V] {
-	db := &MCache[K, V]{
+	c := &MCache[K, V]{
 		m:            make(map[K]valueWithTimeout[V]),
 		stopCh:       make(chan struct{}),
 		timeInterval: cacheBuilder.tmIvl,
@@ -27,10 +27,10 @@ func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K,
 			size: cacheBuilder.size,
 		},
 	}
-	if db.timeInterval > 0 {
-		go db.expireKeys()
+	if c.timeInterval > 0 {
+		go c.expireKeys()
 	}
-	return db
+	return c
 }
 
 // Set adds or updates a key-value pair in the database without setting an expiration time.
@@ -178,10 +178,10 @@ func (c *MCache[K, V]) Delete(k K) {
 	delete(c.m, k)
 }
 
-// TransferTo transfers all key-value pairs from the source DB to the provided destination DB.
+// TransferTo transfers all key-value pairs from the source cache to the provided destination cache.
 //
-// The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
-// The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
+// The source cache and the destination cache are locked during the entire operation.
+// The function is safe to call concurrently with other operations on any of the source cache or destination cache.
 func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
@@ -191,10 +191,10 @@ func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 	src.m = make(map[K]valueWithTimeout[V])
 }
 
-// CopyTo copies all key-value pairs from the source DB to the provided destination DB.
+// CopyTo copies all key-value pairs from the source cache to the provided destination cache.
 //
-// The source DB is locked during the entire operation, and the destination DB is locked for the duration of the function call.
-// The function is safe to call concurrently with other operations on any of the source DB or Destination DB.
+// The source cache are the destination cache are locked during the entire operation.
+// The function is safe to call concurrently with other operations on any of the source cache or Destination cache.
 func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
 	src.mu.RLock()
 	defer src.mu.RUnlock()
