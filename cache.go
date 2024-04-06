@@ -12,6 +12,9 @@ type Cache[K comparable, V any] interface {
 	// It returns the value and true if the key exists in the cache, otherwise, it returns the zero value of the value type and false.
 	Get(K) (V, bool)
 
+	// GetAll returns all key-value pairs in the cache.
+	GetAll() map[K]V
+
 	// Set adds or updates the key-value pair in the cache without setting an expiration time.
 	// If the key already exists, its value will be overwritten with the new value.
 	Set(K, V)
