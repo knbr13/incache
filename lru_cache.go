@@ -151,6 +151,14 @@ func (c *LRUCache[K, V]) Keys() []K {
 	return keys
 }
 
+func (c *LRUCache[K, V]) Purge() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.m = make(map[K]*list.Element)
+	c.evictionList.Init()
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
 	var tm *time.Time
