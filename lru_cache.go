@@ -25,3 +25,21 @@ func newLRU[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *LRUCache[K, 
 		evictionList: list.New(),
 	}
 }
+
+func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item, ok := c.m[k]
+	if !ok {
+		return
+	}
+
+	if item.expireAt != nil && item.expireAt.Before(time.Now()) {
+		delete(c.m, k)
+		c.evictionList.Remove(item.value)
+		return
+	}
+
+	return item.value.Value.(V), true
+}
