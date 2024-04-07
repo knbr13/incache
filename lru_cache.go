@@ -57,3 +57,13 @@ func (c *LRUCache[K, V]) GetAll() map[K]V {
 
 	return m
 }
+
+func (c *LRUCache[K, V]) evict(i int) {
+	for j := 0; j < i; j++ {
+		if b := c.evictionList.Back(); b != nil {
+			c.evictionList.Remove(b)
+		} else {
+			return
+		}
+	}
+}
