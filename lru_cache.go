@@ -63,22 +63,52 @@ func (c *LRUCache[K, V]) Set(k K, v V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.set(k, v, nil)
+	c.set(k, v, 0)
 }
 
 func (c *LRUCache[K, V]) SetWithTimeout(k K, v V, t time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.set(k, v, nil)
+	c.set(k, v, t)
 }
 
-func (c *LRUCache[K, V]) set(k K, v V, exp *time.Duration) {
+func (c *LRUCache[K, V]) NotFoundSet(k K, v V) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	_, ok := c.m[k]
+	if ok {
+		return false
+	}
+
+	c.set(k, v, 0)
+	return true
+}
+
+func (c *LRUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	_, ok := c.m[k]
+	if ok {
+		return false
+	}
+
+	c.set(k, v, t)
+	return true
+}
+
+func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
-	tm := time.Now().Add(*exp)
+	var tm *time.Time
+	if exp > 0 {
+		t := time.Now().Add(exp)
+		tm = &t
+	}
 	if ok {
 		item.Value.(*lruItem[K, V]).value = v
-		item.Value.(*lruItem[K, V]).expireAt = &tm
+		item.Value.(*lruItem[K, V]).expireAt = tm
 		c.evictionList.MoveToFront(item)
 	} else {
 		if len(c.m) == int(c.size) {
@@ -89,7 +119,7 @@ func (c *LRUCache[K, V]) set(k K, v V, exp *time.Duration) {
 			Value: &lruItem[K, V]{
 				key:      k,
 				value:    v,
-				expireAt: &tm,
+				expireAt: tm,
 			},
 		}
 		c.evictionList.PushFront(c.m[k])
