@@ -59,6 +59,20 @@ func (c *LRUCache[K, V]) GetAll() map[K]V {
 	return m
 }
 
+func (c *LRUCache[K, V]) Set(k K, v V) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.set(k, v, nil)
+}
+
+func (c *LRUCache[K, V]) SetWithTimeout(k K, v V, t time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.set(k, v, nil)
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp *time.Duration) {
 	item, ok := c.m[k]
 	tm := time.Now().Add(*exp)
