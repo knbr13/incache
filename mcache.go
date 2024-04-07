@@ -264,6 +264,21 @@ func (c *MCache[K, V]) Purge() {
 func (c *MCache[K, V]) Count() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+
+	var count int
+	for _, v := range c.m {
+		if v.expireAt == nil || !v.expireAt.Before(time.Now()) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (c *MCache[K, V]) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	return len(c.m)
 }
 
