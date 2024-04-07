@@ -47,8 +47,11 @@ type Cache[K comparable, V any] interface {
 	// Purge clears the cache completely.
 	Purge()
 
-	// Count returns the number of key-value pairs in the cache.
+	// Count returns the number of unexpired key-value pairs in the cache.
 	Count() int
+
+	// Len returns the number of key-value pairs in the cache, may include expired entries.
+	Len() int
 
 	setValueWithTimeout(K, valueWithTimeout[V])
 
