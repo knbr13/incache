@@ -139,6 +139,18 @@ func (src *LRUCache[K, V]) CopyTo(dst Cache[K, V]) {
 	}
 }
 
+func (c *LRUCache[K, V]) Keys() []K {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	keys := make([]K, 0, len(c.m))
+	for k := range c.m {
+		keys = append(keys, k)
+	}
+
+	return keys
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
 	var tm *time.Time
