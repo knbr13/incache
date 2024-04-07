@@ -128,6 +128,17 @@ func (src *LRUCache[K, V]) TransferTo(dst Cache[K, V]) {
 	}
 }
 
+func (src *LRUCache[K, V]) CopyTo(dst Cache[K, V]) {
+	src.mu.Lock()
+	defer src.mu.Unlock()
+
+	for k, v := range src.m {
+		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+			dst.Set(k, v.Value.(*lruItem[K, V]).value)
+		}
+	}
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
 	var tm *time.Time
