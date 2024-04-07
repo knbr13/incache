@@ -103,6 +103,10 @@ func (c *LRUCache[K, V]) Delete(k K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	c.delete(k)
+}
+
+func (c *LRUCache[K, V]) delete(k K) {
 	item, ok := c.m[k]
 	if !ok {
 		return
@@ -110,6 +114,18 @@ func (c *LRUCache[K, V]) Delete(k K) {
 
 	delete(c.m, k)
 	c.evictionList.Remove(item)
+}
+
+func (src *LRUCache[K, V]) TransferTo(dst Cache[K, V]) {
+	src.mu.Lock()
+	defer src.mu.Unlock()
+
+	for k, v := range src.m {
+		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+			src.delete(k)
+			dst.Set(k, v.Value.(*lruItem[K, V]).value)
+		}
+	}
 }
 
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
