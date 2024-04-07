@@ -7,112 +7,112 @@ import (
 )
 
 func TestSet(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
-	db.Set("key1", "value1")
-	if db.m["key1"].value != "value1" {
+	c.Set("key1", "value1")
+	if c.m["key1"].value != "value1" {
 		t.Errorf("Set failed")
 	}
 }
 
 func TestNotFoundSet(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
 	key := "key1"
 	value := "value1"
 
-	ok := db.NotFoundSet(key, value)
+	ok := c.NotFoundSet(key, value)
 	if !ok {
 		t.Error("Expected NotFoundSet to return true for a new key")
 	}
 
-	v, ok := db.Get(key)
+	v, ok := c.Get(key)
 	if !ok || v != value {
 		t.Error("Expected value to be added using NotFoundSet")
 	}
 
-	ok = db.NotFoundSet(key, value)
+	ok = c.NotFoundSet(key, value)
 	if ok {
 		t.Error("Expected NotFoundSet to return false for an existing key")
 	}
 }
 
 func TestNotFoundSetWithTimeout(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 	key := "key1"
 	value := "value1"
 	timeout := time.Second
 
-	ok := db.NotFoundSetWithTimeout(key, value, timeout)
+	ok := c.NotFoundSetWithTimeout(key, value, timeout)
 	if !ok {
 		t.Error("Expected NotFoundSetWithTimeout to return true for a new key")
 	}
 
-	v, ok := db.Get(key)
+	v, ok := c.Get(key)
 	if !ok || v != value {
 		t.Error("Expected value to be added using NotFoundSetWithTimeout")
 	}
 
-	ok = db.NotFoundSetWithTimeout(key, value, timeout)
+	ok = c.NotFoundSetWithTimeout(key, value, timeout)
 	if ok {
 		t.Error("Expected NotFoundSetWithTimeout to return false for an existing key")
 	}
 
-	ok = db.NotFoundSetWithTimeout("key2", "value2", timeout)
+	ok = c.NotFoundSetWithTimeout("key2", "value2", timeout)
 	if !ok {
 		t.Error("Expected NotFoundSetWithTimeout to return true for a new key with timeout")
 	}
 
-	time.Sleep(db.timeInterval + timeout)
+	time.Sleep(c.timeInterval + timeout)
 
-	_, ok = db.Get("key2")
+	_, ok = c.Get("key2")
 	if ok {
 		t.Error("Expected value to be expired and removed after the specified timeout")
 	}
 
-	ok = db.NotFoundSetWithTimeout("key3", "value3", -time.Second)
+	ok = c.NotFoundSetWithTimeout("key3", "value3", -time.Second)
 	if !ok {
 		t.Error("Expected NotFoundSetWithTimeout to return true for a new key with negative timeout")
 	}
 }
 
 func TestSetWithTimeout(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 	key := "test"
 	value := "test value"
 	timeout := time.Second
 
-	db.SetWithTimeout(key, value, timeout)
+	c.SetWithTimeout(key, value, timeout)
 
-	v, ok := db.Get(key)
+	v, ok := c.Get(key)
 	if value != v || !ok {
 		t.Errorf("SetWithTimeout failed")
 	}
 
 	time.Sleep(time.Second)
 
-	v, ok = db.Get(key)
+	v, ok = c.Get(key)
 	if v != "" || ok {
 		t.Errorf("SetWithTimeout failed")
 	}
 }
 
 func TestGet(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
-	db.Set("key1", "value1")
+	c.Set("key1", "value1")
 
-	value, ok := db.Get("key1")
+	value, ok := c.Get("key1")
 	if !ok || value != "value1" {
 		t.Errorf("Get returned unexpected value for key1")
 	}
@@ -121,53 +121,53 @@ func TestGet(t *testing.T) {
 func TestGetAll(t *testing.T) {
 	cb := New[string, string](3)
 
-	db := cb.Build()
+	c := cb.Build()
 
-	db.Set("key1", "value1")
-	db.Set("key2", "value2")
-	db.SetWithTimeout("key3", "value3", time.Millisecond)
+	c.Set("key1", "value1")
+	c.Set("key2", "value2")
+	c.SetWithTimeout("key3", "value3", time.Millisecond)
 
-	if m := db.GetAll(); len(m) != 3 {
+	if m := c.GetAll(); len(m) != 3 {
 		t.Errorf("GetAll returned unexpected number of keys: %d", len(m))
 	}
 
 	time.Sleep(time.Millisecond * 2)
 
-	if m := db.GetAll(); len(m) != 2 {
+	if m := c.GetAll(); len(m) != 2 {
 		t.Errorf("GetAll returned unexpected number of keys: %d", len(m))
 	}
 }
 
 func TestGetNonExistentKey(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
-	_, ok := db.Get("nonexistent")
+	_, ok := c.Get("nonexistent")
 	if ok {
 		t.Errorf("Get returned true for a non-existent key")
 	}
 }
 
 func TestDelete(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
-	db.Set("key1", "value1")
-	db.Delete("key1")
+	c.Set("key1", "value1")
+	c.Delete("key1")
 
-	_, ok := db.Get("key1")
+	_, ok := c.Get("key1")
 	if ok {
 		t.Errorf("Get returned true for a deleted key")
 	}
 }
 
 func TestTransferTo(t *testing.T) {
-	src := newManual[string, string](&CacheBuilder[string, string]{
+	src := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
-	dst := newManual[string, string](&CacheBuilder[string, string]{
+	dst := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
@@ -186,10 +186,10 @@ func TestTransferTo(t *testing.T) {
 }
 
 func TestCopyTo(t *testing.T) {
-	src := newManual[string, string](&CacheBuilder[string, string]{
+	src := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
-	dst := newManual[string, string](&CacheBuilder[string, string]{
+	dst := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
@@ -208,14 +208,14 @@ func TestCopyTo(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size: 10,
 	})
 
-	db.Set("key1", "value1")
-	db.Set("key2", "value2")
+	c.Set("key1", "value1")
+	c.Set("key2", "value2")
 
-	keys := db.Keys()
+	keys := c.Keys()
 
 	if len(keys) != 2 {
 		t.Errorf("Unexpected number of keys returned")
@@ -230,18 +230,18 @@ func TestKeys(t *testing.T) {
 }
 
 func TestPurge(t *testing.T) {
-	db := newManual[string, string](&CacheBuilder[string, string]{
+	c := newManual(&CacheBuilder[string, string]{
 		size:  10,
 		tmIvl: 14,
 	})
-	db.Set("1", "one")
-	db.Set("2", "two")
-	db.SetWithTimeout("3", "three", time.Second)
+	c.Set("1", "one")
+	c.Set("2", "two")
+	c.SetWithTimeout("3", "three", time.Second)
 
-	db.Purge()
+	c.Purge()
 
 	select {
-	case _, ok := <-db.stopCh:
+	case _, ok := <-c.stopCh:
 		if ok {
 			t.Errorf("Close: expiration goroutine did not stop as expected")
 		}
@@ -249,7 +249,7 @@ func TestPurge(t *testing.T) {
 		t.Errorf("Close: expiration goroutine did not stop as expected")
 	}
 
-	if len(db.m) != 0 {
+	if len(c.m) != 0 {
 		t.Errorf("Close: database map is not cleaned up")
 	}
 }
