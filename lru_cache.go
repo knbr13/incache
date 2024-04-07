@@ -43,3 +43,17 @@ func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 
 	return item.value.Value.(V), true
 }
+
+func (c *LRUCache[K, V]) GetAll() map[K]V {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	m := make(map[K]V)
+	for k, v := range c.m {
+		if v.expireAt == nil || !v.expireAt.Before(time.Now()) {
+			m[k] = v.value.Value.(V)
+		}
+	}
+
+	return m
+}
