@@ -54,21 +54,6 @@ func (c *MCache[K, V]) Set(k K, v V) {
 	}
 }
 
-func (c *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
-	if c.size == 0 {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if len(c.m) == int(c.size) {
-		c.evict(1)
-	}
-
-	c.m[k] = v
-}
-
 // NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
 func (c *MCache[K, V]) NotFoundSet(k K, v V) bool {
 	if c.size == 0 {
