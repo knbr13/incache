@@ -257,21 +257,44 @@ func TestPurge(t *testing.T) {
 func TestCount(t *testing.T) {
 	db := newManual[int, string](&CacheBuilder[int, string]{
 		size:  10,
-		tmIvl: time.Second,
+		tmIvl: time.Millisecond * 200,
 	})
 	db.Set(1, "one")
 	db.Set(2, "two")
-	db.SetWithTimeout(3, "three", time.Second)
-	db.SetWithTimeout(4, "four", time.Second)
-	db.SetWithTimeout(5, "five", time.Second)
+	db.SetWithTimeout(3, "three", time.Millisecond*100)
+	db.SetWithTimeout(4, "four", time.Millisecond*100)
+	db.SetWithTimeout(5, "five", time.Millisecond*100)
 
 	count := db.Count()
 	if count != 5 {
 		t.Errorf("Count: expected: %d, got: %d", 5, count)
 	}
-	time.Sleep(time.Second * 2)
+
+	time.Sleep(time.Millisecond * 300)
+
 	count = db.Count()
 	if count != 2 {
+		t.Errorf("Count: expected: %d, got: %d", 2, count)
+	}
+
+	db = newManual(
+		&CacheBuilder[int, string]{
+			size: 10,
+		},
+	)
+	db.Set(1, "one")
+	db.Set(2, "two")
+	db.SetWithTimeout(3, "three", time.Millisecond*100)
+	db.SetWithTimeout(4, "four", time.Millisecond*100)
+	db.SetWithTimeout(5, "five", time.Millisecond*100)
+
+	if count := db.Count(); count != 5 {
+		t.Errorf("Count: expected: %d, got: %d", 5, count)
+	}
+
+	time.Sleep(time.Millisecond * 300)
+
+	if count := db.Count(); count != 2 {
 		t.Errorf("Count: expected: %d, got: %d", 2, count)
 	}
 }
