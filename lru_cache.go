@@ -165,7 +165,7 @@ func (c *LRUCache[K, V]) Count() int {
 
 	var count int
 	for _, v := range c.m {
-		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
 			count++
 		}
 	}
