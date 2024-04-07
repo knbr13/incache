@@ -51,7 +51,7 @@ func (c *LRUCache[K, V]) GetAll() map[K]V {
 
 	m := make(map[K]V)
 	for k, v := range c.m {
-		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
 			m[k] = v.Value.(*lruItem[K, V]).value
 		}
 	}
