@@ -121,7 +121,7 @@ func (src *LRUCache[K, V]) TransferTo(dst Cache[K, V]) {
 	defer src.mu.Unlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
 			src.delete(k)
 			dst.Set(k, v.Value.(*lruItem[K, V]).value)
 		}
@@ -133,7 +133,7 @@ func (src *LRUCache[K, V]) CopyTo(dst Cache[K, V]) {
 	defer src.mu.Unlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
 			dst.Set(k, v.Value.(*lruItem[K, V]).value)
 		}
 	}
