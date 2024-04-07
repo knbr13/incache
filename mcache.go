@@ -180,8 +180,8 @@ func (c *MCache[K, V]) Delete(k K) {
 // The source cache and the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or destination cache.
 func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
-	src.mu.Lock()
 	all := src.GetAll()
+	src.mu.Lock()
 	src.m = make(map[K]valueWithTimeout[V])
 	src.mu.Unlock()
 
@@ -195,9 +195,7 @@ func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 // The source cache are the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or Destination cache.
 func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
-	src.mu.RLock()
 	all := src.GetAll()
-	src.mu.RUnlock()
 
 	for k, v := range all {
 		dst.Set(k, v)
