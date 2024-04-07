@@ -83,7 +83,9 @@ func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
 func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
 	switch b.et {
 	case Manual:
-		return newManual[K, V](b)
+		return newManual(b)
+	case LRU:
+		return newLRU(b)
 	default:
 		panic("incache: unknown evict-type")
 	}
@@ -98,4 +100,5 @@ type EvictType string
 
 const (
 	Manual EvictType = "manual"
+	LRU    EvictType = "lru"
 )
