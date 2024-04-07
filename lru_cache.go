@@ -159,6 +159,27 @@ func (c *LRUCache[K, V]) Purge() {
 	c.evictionList.Init()
 }
 
+func (c *LRUCache[K, V]) Count() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var count int
+	for _, v := range c.m {
+		if v.Value.(*lruItem[K, V]).expireAt != nil && v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (c *LRUCache[K, V]) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return len(c.m)
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
 	var tm *time.Time
