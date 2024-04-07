@@ -196,11 +196,13 @@ func (c *MCache[K, V]) Delete(k K) {
 // The function is safe to call concurrently with other operations on any of the source cache or destination cache.
 func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 	src.mu.Lock()
-	defer src.mu.Unlock()
-	for k, v := range src.m {
-		dst.setValueWithTimeout(k, v)
-	}
+	all := src.GetAll()
 	src.m = make(map[K]valueWithTimeout[V])
+	src.mu.Unlock()
+
+	for k, v := range all {
+		dst.Set(k, v)
+	}
 }
 
 // CopyTo copies all key-value pairs from the source cache to the provided destination cache.
@@ -209,9 +211,11 @@ func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 // The function is safe to call concurrently with other operations on any of the source cache or Destination cache.
 func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
 	src.mu.RLock()
-	defer src.mu.RUnlock()
-	for k, v := range src.m {
-		dst.setValueWithTimeout(k, v)
+	all := src.GetAll()
+	src.mu.RUnlock()
+
+	for k, v := range all {
+		dst.Set(k, v)
 	}
 }
 
