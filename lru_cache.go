@@ -99,6 +99,19 @@ func (c *LRUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool 
 	return true
 }
 
+func (c *LRUCache[K, V]) Delete(k K) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item, ok := c.m[k]
+	if !ok {
+		return
+	}
+
+	delete(c.m, k)
+	c.evictionList.Remove(item)
+}
+
 func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 	item, ok := c.m[k]
 	var tm *time.Time
