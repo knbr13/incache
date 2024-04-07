@@ -54,21 +54,6 @@ func (c *MCache[K, V]) Set(k K, v V) {
 	}
 }
 
-func (c *MCache[K, V]) setValueWithTimeout(k K, v valueWithTimeout[V]) {
-	if c.size == 0 {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if len(c.m) == int(c.size) {
-		c.evict(1)
-	}
-
-	c.m[k] = v
-}
-
 // NotFoundSet adds a key-value pair to the database if the key does not already exist and returns true. Otherwise, it does nothing and returns false.
 func (c *MCache[K, V]) NotFoundSet(k K, v V) bool {
 	if c.size == 0 {
@@ -195,12 +180,14 @@ func (c *MCache[K, V]) Delete(k K) {
 // The source cache and the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or destination cache.
 func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
+	all := src.GetAll()
 	src.mu.Lock()
-	defer src.mu.Unlock()
-	for k, v := range src.m {
-		dst.setValueWithTimeout(k, v)
-	}
 	src.m = make(map[K]valueWithTimeout[V])
+	src.mu.Unlock()
+
+	for k, v := range all {
+		dst.Set(k, v)
+	}
 }
 
 // CopyTo copies all key-value pairs from the source cache to the provided destination cache.
@@ -208,10 +195,10 @@ func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 // The source cache are the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or Destination cache.
 func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
-	src.mu.RLock()
-	defer src.mu.RUnlock()
-	for k, v := range src.m {
-		dst.setValueWithTimeout(k, v)
+	all := src.GetAll()
+
+	for k, v := range all {
+		dst.Set(k, v)
 	}
 }
 
