@@ -196,22 +196,24 @@ func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 			c.evict(1)
 		}
 
-		c.m[k] = &list.Element{
-			Value: &lruItem[K, V]{
-				key:      k,
-				value:    v,
-				expireAt: tm,
-			},
+		lruItem := &lruItem[K, V]{
+			key:      k,
+			value:    v,
+			expireAt: tm,
 		}
-		c.evictionList.PushFront(c.m[k])
+
+		c.m[k] = &list.Element{
+			Value: lruItem,
+		}
+		c.evictionList.PushFront(lruItem)
 	}
 }
 
 func (c *LRUCache[K, V]) evict(i int) {
 	for j := 0; j < i; j++ {
 		if b := c.evictionList.Back(); b != nil {
+			delete(c.m, b.Value.(*lruItem[K, V]).key)
 			c.evictionList.Remove(b)
-			delete(c.m, b.Value.(lruItem[K, V]).key)
 		} else {
 			return
 		}
