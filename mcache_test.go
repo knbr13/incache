@@ -255,47 +255,76 @@ func TestPurge(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	db := newManual[int, string](&CacheBuilder[int, string]{
+	c := newManual[int, string](&CacheBuilder[int, string]{
 		size:  10,
 		tmIvl: time.Millisecond * 200,
 	})
-	db.Set(1, "one")
-	db.Set(2, "two")
-	db.SetWithTimeout(3, "three", time.Millisecond*100)
-	db.SetWithTimeout(4, "four", time.Millisecond*100)
-	db.SetWithTimeout(5, "five", time.Millisecond*100)
+	c.Set(1, "one")
+	c.Set(2, "two")
+	c.SetWithTimeout(3, "three", time.Millisecond*100)
+	c.SetWithTimeout(4, "four", time.Millisecond*100)
+	c.SetWithTimeout(5, "five", time.Millisecond*100)
 
-	count := db.Count()
+	count := c.Count()
 	if count != 5 {
 		t.Errorf("Count: expected: %d, got: %d", 5, count)
 	}
 
 	time.Sleep(time.Millisecond * 300)
 
-	count = db.Count()
+	count = c.Count()
 	if count != 2 {
 		t.Errorf("Count: expected: %d, got: %d", 2, count)
 	}
 
-	db = newManual(
+	c = newManual(
 		&CacheBuilder[int, string]{
 			size: 10,
 		},
 	)
-	db.Set(1, "one")
-	db.Set(2, "two")
-	db.SetWithTimeout(3, "three", time.Millisecond*100)
-	db.SetWithTimeout(4, "four", time.Millisecond*100)
-	db.SetWithTimeout(5, "five", time.Millisecond*100)
+	c.Set(1, "one")
+	c.Set(2, "two")
+	c.SetWithTimeout(3, "three", time.Millisecond*100)
+	c.SetWithTimeout(4, "four", time.Millisecond*100)
+	c.SetWithTimeout(5, "five", time.Millisecond*100)
 
-	if count := db.Count(); count != 5 {
+	if count := c.Count(); count != 5 {
 		t.Errorf("Count: expected: %d, got: %d", 5, count)
 	}
 
 	time.Sleep(time.Millisecond * 300)
 
-	if count := db.Count(); count != 2 {
+	if count := c.Count(); count != 2 {
 		t.Errorf("Count: expected: %d, got: %d", 2, count)
+	}
+}
+
+func TestLen(t *testing.T) {
+	c := newManual(&CacheBuilder[string, string]{
+		size: 10,
+	})
+	c.Set("1", "one")
+	c.Set("2", "two")
+	c.SetWithTimeout("3", "three", time.Millisecond*100)
+	c.SetWithTimeout("4", "four", time.Millisecond*100)
+
+	if l := c.Len(); l != 4 {
+		t.Errorf("Len: expected: %d, got: %d", 4, l)
+	}
+
+	c = newManual(&CacheBuilder[string, string]{
+		size:  10,
+		tmIvl: time.Millisecond * 150,
+	})
+	c.Set("1", "one")
+	c.Set("2", "two")
+	c.SetWithTimeout("3", "three", time.Millisecond*50)
+	c.SetWithTimeout("4", "four", time.Millisecond*50)
+
+	time.Sleep(time.Millisecond * 150)
+
+	if l := c.Len(); l != 2 {
+		t.Errorf("Len: expected: %d, got: %d", 2, l)
 	}
 }
 
