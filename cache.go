@@ -74,8 +74,9 @@ func (cb *CacheBuilder[K, V]) TimeInterval(t time.Duration) *CacheBuilder[K, V] 
 	return cb
 }
 
-func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) {
+func (b *CacheBuilder[K, V]) EvictType(evictType EvictType) *CacheBuilder[K, V] {
 	b.et = evictType
+	return b
 }
 
 func (b *CacheBuilder[K, V]) Build() Cache[K, V] {
