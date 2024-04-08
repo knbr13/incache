@@ -202,10 +202,8 @@ func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 			expireAt: tm,
 		}
 
-		c.m[k] = &list.Element{
-			Value: lruItem,
-		}
-		c.evictionList.PushFront(lruItem)
+		insertedItem := c.evictionList.PushFront(lruItem)
+		c.m[k] = insertedItem
 	}
 }
 
