@@ -116,6 +116,11 @@ func TestGet(t *testing.T) {
 	if !ok || value != "value1" {
 		t.Errorf("Get returned unexpected value for key1")
 	}
+
+	_, ok = c.Get("nonexistent")
+	if ok {
+		t.Errorf("Get returned true for a non-existent key")
+	}
 }
 
 func TestGetAll(t *testing.T) {
@@ -135,17 +140,6 @@ func TestGetAll(t *testing.T) {
 
 	if m := c.GetAll(); len(m) != 2 {
 		t.Errorf("GetAll returned unexpected number of keys: %d", len(m))
-	}
-}
-
-func TestGetNonExistentKey(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
-
-	_, ok := c.Get("nonexistent")
-	if ok {
-		t.Errorf("Get returned true for a non-existent key")
 	}
 }
 
