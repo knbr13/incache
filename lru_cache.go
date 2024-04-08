@@ -42,6 +42,8 @@ func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 		return
 	}
 
+	c.evictionList.MoveToFront(item)
+
 	return item.Value.(*lruItem[K, V]).value, true
 }
 
