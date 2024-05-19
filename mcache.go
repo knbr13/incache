@@ -226,13 +226,13 @@ func (c *MCache[K, V]) expireKeys() {
 	for {
 		select {
 		case <-ticker.C:
-			c.mu.Lock()
 			for k, v := range c.m {
 				if v.expireAt != nil && v.expireAt.Before(time.Now()) {
+					c.mu.Lock()
 					delete(c.m, k)
+					c.mu.Unlock()
 				}
 			}
-			c.mu.Unlock()
 		case <-c.stopCh:
 			return
 		}
