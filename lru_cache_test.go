@@ -144,10 +144,15 @@ func TestKeys_LRU(t *testing.T) {
 	c.Set("key3", "value3")
 	c.Set("key4", "value4")
 	c.Set("key5", "value5")
+	c.SetWithTimeout("key6", "value6", 1)
+	c.SetWithTimeout("key7", "value7", 1)
+	c.SetWithTimeout("key8", "value8", 1)
+	c.SetWithTimeout("key9", "value9", 1)
+	c.Set("key10", "value10")
 
 	keys := c.Keys()
 
-	if len(keys) != 5 {
+	if len(keys) != 6 {
 		t.Errorf("Keys failed")
 	}
 }

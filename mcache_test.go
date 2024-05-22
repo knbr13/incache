@@ -184,14 +184,18 @@ func TestKeys(t *testing.T) {
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
+	c.SetWithTimeout("key3", "value3", 1)
+	c.SetWithTimeout("key4", "value4", 1)
+	c.SetWithTimeout("key5", "value5", 1)
+	c.Set("key6", "value6")
 
 	keys := c.Keys()
 
-	if len(keys) != 2 {
+	if len(keys) != 3 {
 		t.Errorf("Unexpected number of keys returned")
 	}
 
-	expectedKeys := map[string]bool{"key1": true, "key2": true}
+	expectedKeys := map[string]bool{"key1": true, "key2": true, "key6": true}
 	for _, key := range keys {
 		if !expectedKeys[key] {
 			t.Errorf("Unexpected key %s returned", key)
@@ -202,9 +206,12 @@ func TestKeys(t *testing.T) {
 func TestPurge(t *testing.T) {
 	c := NewManual[string, string](10, time.Millisecond*100)
 
-	c.Set("1", "one")
-	c.Set("2", "two")
-	c.SetWithTimeout("3", "three", time.Second)
+	c.Set("key1", "value1")
+	c.Set("key2", "value2")
+	c.SetWithTimeout("key3", "value3", 1)
+	c.SetWithTimeout("key4", "value4", 1)
+	c.SetWithTimeout("key5", "value5", 1)
+	c.Set("key6", "value6")
 
 	c.Purge()
 
