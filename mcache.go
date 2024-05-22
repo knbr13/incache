@@ -202,18 +202,18 @@ func (src *MCache[K, V]) CopyTo(dst *MCache[K, V]) {
 	}
 }
 
-// Keys returns a slice containing the keys of the map in random order.
 func (c *MCache[K, V]) Keys() []K {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	keys := make([]K, len(c.m))
-	var i uint
+	keys := make([]K, 0, c.Count())
 
-	for k := range c.m {
-		keys[i] = k
-		i++
+	for k, v := range c.m {
+		if v.expireAt == nil || !v.expireAt.Before(time.Now()) {
+			keys = append(keys, k)
+		}
 	}
+
 	return keys
 }
 

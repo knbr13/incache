@@ -145,9 +145,12 @@ func (c *LRUCache[K, V]) Keys() []K {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	keys := make([]K, 0, len(c.m))
-	for k := range c.m {
-		keys = append(keys, k)
+	keys := make([]K, 0, c.Count())
+
+	for k, v := range c.m {
+		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+			keys = append(keys, k)
+		}
 	}
 
 	return keys
