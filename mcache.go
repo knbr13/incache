@@ -1,11 +1,13 @@
 package incache
 
 import (
+	"sync"
 	"time"
 )
 
 type MCache[K comparable, V any] struct {
-	baseCache
+	mu           sync.RWMutex
+	size         uint
 	m            map[K]valueWithTimeout[V] // where the key-value pairs are stored
 	stopCh       chan struct{}             // Channel to signal timeout goroutine to stop
 	timeInterval time.Duration             // Time interval to sleep the goroutine that checks for expired keys
@@ -18,14 +20,12 @@ type valueWithTimeout[V any] struct {
 
 // New creates a new cache instance with optional configuration provided by the specified options.
 // The database starts a background goroutine to periodically check for expired keys based on the configured time interval.
-func newManual[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *MCache[K, V] {
+func NewManual[K comparable, V any](size uint, timeInterval time.Duration) *MCache[K, V] {
 	c := &MCache[K, V]{
 		m:            make(map[K]valueWithTimeout[V]),
 		stopCh:       make(chan struct{}),
-		timeInterval: cacheBuilder.tmIvl,
-		baseCache: baseCache{
-			size: cacheBuilder.size,
-		},
+		size:         size,
+		timeInterval: timeInterval,
 	}
 	if c.timeInterval > 0 {
 		go c.expireKeys()
@@ -179,7 +179,7 @@ func (c *MCache[K, V]) Delete(k K) {
 //
 // The source cache and the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or destination cache.
-func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
+func (src *MCache[K, V]) TransferTo(dst *MCache[K, V]) {
 	all := src.GetAll()
 	src.mu.Lock()
 	src.m = make(map[K]valueWithTimeout[V])
@@ -194,7 +194,7 @@ func (src *MCache[K, V]) TransferTo(dst Cache[K, V]) {
 //
 // The source cache are the destination cache are locked during the entire operation.
 // The function is safe to call concurrently with other operations on any of the source cache or Destination cache.
-func (src *MCache[K, V]) CopyTo(dst Cache[K, V]) {
+func (src *MCache[K, V]) CopyTo(dst *MCache[K, V]) {
 	all := src.GetAll()
 
 	for k, v := range all {

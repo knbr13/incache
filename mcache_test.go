@@ -7,9 +7,7 @@ import (
 )
 
 func TestSet(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 
 	c.Set("key1", "value1")
 	if c.m["key1"].value != "value1" {
@@ -18,9 +16,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestNotFoundSet(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 
 	key := "key1"
 	value := "value1"
@@ -42,9 +38,7 @@ func TestNotFoundSet(t *testing.T) {
 }
 
 func TestNotFoundSetWithTimeout(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 	key := "key1"
 	value := "value1"
 	timeout := time.Second
@@ -83,9 +77,7 @@ func TestNotFoundSetWithTimeout(t *testing.T) {
 }
 
 func TestSetWithTimeout(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 	key := "test"
 	value := "test value"
 	timeout := time.Second
@@ -106,9 +98,7 @@ func TestSetWithTimeout(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 
 	c.Set("key1", "value1")
 
@@ -124,9 +114,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	cb := New[string, string](3)
-
-	c := cb.Build()
+	c := NewManual[string, string](10, 0)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -144,9 +132,7 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 
 	c.Set("key1", "value1")
 	c.Delete("key1")
@@ -158,12 +144,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestTransferTo(t *testing.T) {
-	src := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
-	dst := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	src := NewManual[string, string](10, 0)
+	dst := NewManual[string, string](10, 0)
 
 	src.Set("key1", "value1")
 	src.TransferTo(dst)
@@ -180,12 +162,8 @@ func TestTransferTo(t *testing.T) {
 }
 
 func TestCopyTo(t *testing.T) {
-	src := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
-	dst := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	src := NewManual[string, string](10, 0)
+	dst := NewManual[string, string](10, 0)
 
 	src.Set("key1", "value1")
 	src.CopyTo(dst)
@@ -202,9 +180,7 @@ func TestCopyTo(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -224,10 +200,8 @@ func TestKeys(t *testing.T) {
 }
 
 func TestPurge(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size:  10,
-		tmIvl: 14,
-	})
+	c := NewManual[string, string](10, time.Millisecond*100)
+
 	c.Set("1", "one")
 	c.Set("2", "two")
 	c.SetWithTimeout("3", "three", time.Second)
@@ -249,10 +223,7 @@ func TestPurge(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	c := newManual[int, string](&CacheBuilder[int, string]{
-		size:  10,
-		tmIvl: time.Millisecond * 200,
-	})
+	c := NewManual[int, string](10, 0)
 	c.Set(1, "one")
 	c.Set(2, "two")
 	c.SetWithTimeout(3, "three", time.Millisecond*100)
@@ -271,11 +242,7 @@ func TestCount(t *testing.T) {
 		t.Errorf("Count: expected: %d, got: %d", 2, count)
 	}
 
-	c = newManual(
-		&CacheBuilder[int, string]{
-			size: 10,
-		},
-	)
+	c = NewManual[int, string](10, 0)
 	c.Set(1, "one")
 	c.Set(2, "two")
 	c.SetWithTimeout(3, "three", time.Millisecond*100)
@@ -294,9 +261,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestLen(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewManual[string, string](10, 0)
 	c.Set("1", "one")
 	c.Set("2", "two")
 	c.SetWithTimeout("3", "three", time.Millisecond*100)
@@ -306,10 +271,8 @@ func TestLen(t *testing.T) {
 		t.Errorf("Len: expected: %d, got: %d", 4, l)
 	}
 
-	c = newManual(&CacheBuilder[string, string]{
-		size:  10,
-		tmIvl: time.Millisecond * 150,
-	})
+	c = NewManual[string, string](10, time.Millisecond*100)
+
 	c.Set("1", "one")
 	c.Set("2", "two")
 	c.SetWithTimeout("3", "three", time.Millisecond*50)
@@ -323,10 +286,7 @@ func TestLen(t *testing.T) {
 }
 
 func TestEvict(t *testing.T) {
-	c := newManual(&CacheBuilder[string, string]{
-		et:   Manual,
-		size: 3,
-	})
+	c := NewManual[string, string](10, 0)
 
 	c.Set("1", "one")
 	c.Set("2", "two")
@@ -335,11 +295,11 @@ func TestEvict(t *testing.T) {
 
 	fmt.Println(c.Keys())
 
-	if count := c.Count(); count != 3 {
-		t.Errorf("Count: expected: %d, got: %d", 3, count)
+	if count := c.Count(); count != 4 {
+		t.Errorf("Count: expected: %d, got: %d", 4, count)
 	}
 
-	c.evict(2)
+	c.evict(3)
 
 	if count := c.Count(); count != 1 {
 		t.Errorf("Count: expected: %d, got: %d", 1, count)

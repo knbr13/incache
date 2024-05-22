@@ -6,9 +6,7 @@ import (
 )
 
 func TestSet_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	if c.m["key1"].Value.(*lruItem[string, string]).value != "value1" {
@@ -17,9 +15,7 @@ func TestSet_LRU(t *testing.T) {
 }
 
 func TestGet_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	if v, ok := c.Get("key1"); !ok || v != "value1" {
@@ -28,9 +24,7 @@ func TestGet_LRU(t *testing.T) {
 }
 
 func TestGetAll_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -51,9 +45,7 @@ func TestGetAll_LRU(t *testing.T) {
 }
 
 func TestSetWithTimeout_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.SetWithTimeout("key1", "value1", time.Millisecond)
 
@@ -65,9 +57,7 @@ func TestSetWithTimeout_LRU(t *testing.T) {
 }
 
 func TestNotFoundSet_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	if !c.NotFoundSet("key1", "value1") {
 		t.Errorf("NotFoundSet failed")
@@ -79,9 +69,7 @@ func TestNotFoundSet_LRU(t *testing.T) {
 }
 
 func TestNotFoundSetWithTimeout_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	if !c.NotFoundSetWithTimeout("key1", "value1", 0) {
 		t.Errorf("NotFoundSetWithTimeout failed")
@@ -93,9 +81,7 @@ func TestNotFoundSetWithTimeout_LRU(t *testing.T) {
 }
 
 func TestDelete_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 
@@ -107,9 +93,7 @@ func TestDelete_LRU(t *testing.T) {
 }
 
 func TestTransferTo_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -117,9 +101,7 @@ func TestTransferTo_LRU(t *testing.T) {
 	c.Set("key4", "value4")
 	c.Set("key5", "value5")
 
-	c2 := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c2 := NewLRU[string, string](10)
 
 	c.TransferTo(c2)
 
@@ -133,9 +115,7 @@ func TestTransferTo_LRU(t *testing.T) {
 }
 
 func TestCopyTo_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -143,9 +123,7 @@ func TestCopyTo_LRU(t *testing.T) {
 	c.Set("key4", "value4")
 	c.Set("key5", "value5")
 
-	c2 := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c2 := NewLRU[string, string](10)
 
 	c.CopyTo(c2)
 
@@ -159,9 +137,7 @@ func TestCopyTo_LRU(t *testing.T) {
 }
 
 func TestKeys_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -177,9 +153,7 @@ func TestKeys_LRU(t *testing.T) {
 }
 
 func TestPurge_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 3,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -201,9 +175,7 @@ func TestPurge_LRU(t *testing.T) {
 }
 
 func TestCount_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -224,9 +196,7 @@ func TestCount_LRU(t *testing.T) {
 }
 
 func TestLen_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 10,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")
@@ -247,9 +217,7 @@ func TestLen_LRU(t *testing.T) {
 }
 
 func TestEvict_LRU(t *testing.T) {
-	c := newLRU(&CacheBuilder[string, string]{
-		size: 5,
-	})
+	c := NewLRU[string, string](10)
 
 	c.Set("key1", "value1")
 	c.Set("key2", "value2")

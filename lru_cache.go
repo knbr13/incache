@@ -2,6 +2,7 @@ package incache
 
 import (
 	"container/list"
+	"sync"
 	"time"
 )
 
@@ -12,16 +13,15 @@ type lruItem[K comparable, V any] struct {
 }
 
 type LRUCache[K comparable, V any] struct {
-	baseCache
+	mu           sync.RWMutex
+	size         uint
 	m            map[K]*list.Element // where the key-value pairs are stored
 	evictionList *list.List
 }
 
-func newLRU[K comparable, V any](cacheBuilder *CacheBuilder[K, V]) *LRUCache[K, V] {
+func NewLRU[K comparable, V any](size uint) *LRUCache[K, V] {
 	return &LRUCache[K, V]{
-		baseCache: baseCache{
-			size: cacheBuilder.size,
-		},
+		size:         size,
 		m:            make(map[K]*list.Element),
 		evictionList: list.New(),
 	}
@@ -118,7 +118,7 @@ func (c *LRUCache[K, V]) delete(k K) {
 	c.evictionList.Remove(item)
 }
 
-func (src *LRUCache[K, V]) TransferTo(dst Cache[K, V]) {
+func (src *LRUCache[K, V]) TransferTo(dst *LRUCache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
 
@@ -130,7 +130,7 @@ func (src *LRUCache[K, V]) TransferTo(dst Cache[K, V]) {
 	}
 }
 
-func (src *LRUCache[K, V]) CopyTo(dst Cache[K, V]) {
+func (src *LRUCache[K, V]) CopyTo(dst *LRUCache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
 
