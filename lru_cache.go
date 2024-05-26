@@ -12,6 +12,7 @@ type lruItem[K comparable, V any] struct {
 	expireAt *time.Time
 }
 
+// Least Recently Used Cache
 type LRUCache[K comparable, V any] struct {
 	mu           sync.RWMutex
 	size         uint
@@ -27,6 +28,9 @@ func NewLRU[K comparable, V any](size uint) *LRUCache[K, V] {
 	}
 }
 
+// Get retrieves the value associated with the given key from the cache.
+// If the key is not found or has expired, it returns (zero value of V, false).
+// If the key is found and not expired, it moves the key-value pair to the front of the eviction list.
 func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -47,6 +51,8 @@ func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 	return item.Value.(*lruItem[K, V]).value, true
 }
 
+// GetAll retrieves all key-value pairs from the cache.
+// It returns a map containing all the key-value pairs that are not expired.
 func (c *LRUCache[K, V]) GetAll() map[K]V {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -61,6 +67,7 @@ func (c *LRUCache[K, V]) GetAll() map[K]V {
 	return m
 }
 
+// Set adds the key-value pair to the cache.
 func (c *LRUCache[K, V]) Set(k K, v V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -68,6 +75,7 @@ func (c *LRUCache[K, V]) Set(k K, v V) {
 	c.set(k, v, 0)
 }
 
+// SetWithTimeout adds the key-value pair to the cache with a specified expiration time.
 func (c *LRUCache[K, V]) SetWithTimeout(k K, v V, t time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -75,6 +83,8 @@ func (c *LRUCache[K, V]) SetWithTimeout(k K, v V, t time.Duration) {
 	c.set(k, v, t)
 }
 
+// NotFoundSet adds the key-value pair to the cache only if the key does not exist.
+// It returns true if the key was added to the cache, otherwise false.
 func (c *LRUCache[K, V]) NotFoundSet(k K, v V) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -88,6 +98,9 @@ func (c *LRUCache[K, V]) NotFoundSet(k K, v V) bool {
 	return true
 }
 
+// NotFoundSetWithTimeout adds the key-value pair to the cache only if the key does not exist.
+// It sets an expiration time for the key-value pair.
+// It returns true if the key was added to the cache, otherwise false.
 func (c *LRUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -101,6 +114,7 @@ func (c *LRUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool 
 	return true
 }
 
+// Delete removes the key-value pair associated with the given key from the cache.
 func (c *LRUCache[K, V]) Delete(k K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -118,6 +132,7 @@ func (c *LRUCache[K, V]) delete(k K) {
 	c.evictionList.Remove(item)
 }
 
+// TransferTo transfers all non-expired key-value pairs from the source cache to the destination cache.
 func (src *LRUCache[K, V]) TransferTo(dst *LRUCache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
@@ -130,6 +145,7 @@ func (src *LRUCache[K, V]) TransferTo(dst *LRUCache[K, V]) {
 	}
 }
 
+// CopyTo copies all non-expired key-value pairs from the source cache to the destination cache.
 func (src *LRUCache[K, V]) CopyTo(dst *LRUCache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
@@ -141,6 +157,9 @@ func (src *LRUCache[K, V]) CopyTo(dst *LRUCache[K, V]) {
 	}
 }
 
+// Keys returns a slice of all keys currently stored in the cache.
+// The returned slice does not include expired keys.
+// The order of keys in the slice is not guaranteed.
 func (c *LRUCache[K, V]) Keys() []K {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -156,6 +175,7 @@ func (c *LRUCache[K, V]) Keys() []K {
 	return keys
 }
 
+// Purge removes all key-value pairs from the cache.
 func (c *LRUCache[K, V]) Purge() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -164,6 +184,7 @@ func (c *LRUCache[K, V]) Purge() {
 	c.evictionList.Init()
 }
 
+// Count returns the number of non-expired key-value pairs currently stored in the cache.
 func (c *LRUCache[K, V]) Count() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -178,6 +199,7 @@ func (c *LRUCache[K, V]) Count() int {
 	return count
 }
 
+// Len returns the number of elements in the cache.
 func (c *LRUCache[K, V]) Len() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
