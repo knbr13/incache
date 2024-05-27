@@ -10,7 +10,7 @@ To use this package in your Go project, you can install it using `go get`:
 go get github.com/knbr13/incache
 ```
 
-### Usage
+### Example
 
 ```go
 package main
@@ -19,59 +19,44 @@ import (
 	"fmt"
 	"time"
 
-	incache "github.com/knbr13/incache"
+	"github.com/knbr13/incache"
 )
 
 func main() {
-	// Create a new Cache Builder
-	cb := incache.New[string, string](3) // 3 is the maximum number of key-value pairs the cache can hold
+	// create a new LRU Cache
+	c := incache.NewLRU[string, int](10)
 
-	// Build the Cache
-	db := cb.Build()
+	fmt.Println("keys:", c.Keys())
 
-	fmt.Println("keys:", db.Keys())
+	// set some key-value pairs
+	c.Set("one", 1)
+	c.Set("two", 2)
+	c.Set("three", 3)
+	c.Set("four", 4)
+	c.Set("five", 5)
 
-	// Set key-value pairs
-	db.Set("key1", "value1")
-	db.Set("key2", "value2")
-
-	db.SetWithTimeout("key3", "value3", time.Second)
+	c.SetWithTimeout("six", 6, time.Millisecond)
 
 	// Get values by key
-	value1, ok1 := db.Get("key1")
-	value2, ok2 := db.Get("key2")
-
-	if ok1 {
-		fmt.Println("Value for key1:", value1)
+	v, ok := c.Get("one")
+	if ok {
+		fmt.Println("Value for key1:", v)
 	}
 
-	if ok2 {
-		fmt.Println("Value for key2:", value2)
+	v, ok = c.Get("two")
+	if ok {
+		fmt.Println("Value for key1:", v)
 	}
 
-	// Delete a key
-	db.Delete("key1")
+	c.Delete("one")
 
-	// Transfer data to another database
-	anotherCB := incache.New[string, string](2)
-	anotherDB := anotherCB.Build()
-	db.TransferTo(anotherDB)
+	// create new cache, move data from 'c' to 'c2'
+	c2 := incache.NewLRU[string, int](10)
+	c.TransferTo(c2)
 
-	// Copy data to another database
-	copyCB := incache.New[string, string](2)
-	copyDB := copyCB.Build()
-	anotherDB.CopyTo(copyDB)
-
-	// Retrieve keys
-	keys := anotherDB.Keys()
-	fmt.Println("Keys in anotherDB:", keys)
-
-	keys = copyDB.Keys()
-	fmt.Println("Keys in copyDB:", keys)
-
-	time.Sleep(time.Second)
-	value3, ok3 := copyDB.Get("key3")
-	fmt.Printf("ok = %v, value = %v\n", ok3, value3) // ok = false, value =
+	// create new cache, copy data from 'c2' to 'c3'
+	c3 := incache.NewLRU[string, int](10)
+	c2.CopyTo(c3)
 }
 ```
 
