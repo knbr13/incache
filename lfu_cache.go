@@ -38,3 +38,29 @@ func (l *LFUCache[K, V]) evict(n int) {
 		}
 	}
 }
+
+func (l *LFUCache[K, V]) move(elem *list.Element) {
+	item := elem.Value.(*lfuItem[K, V])
+	freq := item.freq
+
+	curr := elem
+	for ; curr.Prev() != nil; curr = curr.Prev() {
+		if freq != curr.Value.(*lfuItem[K, V]).freq {
+			break
+		}
+	}
+
+	if curr == elem {
+		item.freq++
+		return
+	}
+
+	if curr.Value.(*lfuItem[K, V]).freq == freq {
+		l.evictionList.MoveToFront(elem)
+		item.freq++
+		return
+	}
+
+	l.evictionList.MoveBefore(elem, curr)
+	item.freq++
+}
