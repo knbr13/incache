@@ -91,6 +91,20 @@ func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
 	return lfuItem.value, true
 }
 
+func (l *LFUCache[K, V]) GetAll() map[K]V {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	m := make(map[K]V)
+	for k, v := range l.m {
+		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+			m[k] = v.Value.(*lfuItem[K, V]).value
+		}
+	}
+
+	return m
+}
+
 func (l *LFUCache[K, V]) delete(key K, elem *list.Element) {
 	delete(l.m, key)
 	l.evictionList.Remove(elem)
