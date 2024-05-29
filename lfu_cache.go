@@ -154,6 +154,27 @@ func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
 	}
 }
 
+func (l *LFUCache[K, V]) Count() int {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	var count int
+	for _, v := range l.m {
+		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (l *LFUCache[K, V]) Len() int {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	return len(l.m)
+}
+
 func (l *LFUCache[K, V]) Delete(k K) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
