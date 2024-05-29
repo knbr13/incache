@@ -154,6 +154,21 @@ func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
 	}
 }
 
+func (l *LFUCache[K, V]) Keys() []K {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	keys := make([]K, 0, l.Count())
+
+	for k, v := range l.m {
+		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+			keys = append(keys, k)
+		}
+	}
+
+	return keys
+}
+
 func (l *LFUCache[K, V]) Count() int {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
