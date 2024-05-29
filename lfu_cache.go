@@ -131,6 +131,18 @@ func (l *LFUCache[K, V]) GetAll() map[K]V {
 	return m
 }
 
+func (src *LFUCache[K, V]) TransferTo(dst *LFUCache[K, V]) {
+	src.mu.Lock()
+	defer src.mu.Unlock()
+
+	for k, v := range src.m {
+		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+			src.delete(k, v)
+			dst.Set(k, v.Value.(*lfuItem[K, V]).value)
+		}
+	}
+}
+
 func (l *LFUCache[K, V]) Delete(k K) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
