@@ -54,7 +54,6 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 
 		lfuItem.value = value
 		lfuItem.expireAt = tm
-		lfuItem.freq++
 
 		l.move(item)
 	} else {
@@ -130,6 +129,6 @@ func (l *LFUCache[K, V]) move(elem *list.Element) {
 		return
 	}
 
-	l.evictionList.MoveBefore(elem, curr)
+	l.evictionList.MoveAfter(elem, curr)
 	item.freq++
 }
