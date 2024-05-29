@@ -35,6 +35,13 @@ func (l *LFUCache[K, V]) Set(key K, value V) {
 	l.set(key, value, 0)
 }
 
+func (l *LFUCache[K, V]) SetWithTimeout(key K, value V, exp time.Duration) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.set(key, value, exp)
+}
+
 func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 	item, ok := l.m[key]
 	var tm *time.Time
