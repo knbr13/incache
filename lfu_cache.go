@@ -72,6 +72,11 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 	}
 }
 
+func (l *LFUCache[K, V]) delete(key K, elem *list.Element) {
+	delete(l.m, key)
+	l.evictionList.Remove(elem)
+}
+
 func (l *LFUCache[K, V]) evict(n int) {
 	for i := 0; i < n; i++ {
 		if b := l.evictionList.Back(); b != nil {
