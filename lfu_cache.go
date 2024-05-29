@@ -104,6 +104,19 @@ func (l *LFUCache[K, V]) NotFoundSet(k K, v V) bool {
 	return true
 }
 
+func (l *LFUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	_, ok := l.m[k]
+	if ok {
+		return false
+	}
+
+	l.set(k, v, t)
+	return true
+}
+
 func (l *LFUCache[K, V]) GetAll() map[K]V {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
