@@ -131,6 +131,18 @@ func (l *LFUCache[K, V]) GetAll() map[K]V {
 	return m
 }
 
+func (l *LFUCache[K, V]) Delete(k K) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	item, ok := l.m[k]
+	if !ok {
+		return
+	}
+
+	l.delete(k, item)
+}
+
 func (l *LFUCache[K, V]) delete(key K, elem *list.Element) {
 	delete(l.m, key)
 	l.evictionList.Remove(elem)
