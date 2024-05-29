@@ -91,6 +91,19 @@ func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
 	return lfuItem.value, true
 }
 
+func (l *LFUCache[K, V]) NotFoundSet(k K, v V) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	_, ok := l.m[k]
+	if ok {
+		return false
+	}
+
+	l.set(k, v, 0)
+	return true
+}
+
 func (l *LFUCache[K, V]) GetAll() map[K]V {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
