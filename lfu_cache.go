@@ -169,6 +169,14 @@ func (l *LFUCache[K, V]) Keys() []K {
 	return keys
 }
 
+func (l *LFUCache[K, V]) Purge() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.m = make(map[K]*list.Element)
+	l.evictionList.Init()
+}
+
 func (l *LFUCache[K, V]) Count() int {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
