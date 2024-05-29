@@ -143,6 +143,17 @@ func (src *LFUCache[K, V]) TransferTo(dst *LFUCache[K, V]) {
 	}
 }
 
+func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	for k, v := range src.m {
+		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+			dst.Set(k, v.Value.(*lfuItem[K, V]).value)
+		}
+	}
+}
+
 func (l *LFUCache[K, V]) Delete(k K) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
