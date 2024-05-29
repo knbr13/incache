@@ -27,3 +27,14 @@ type lfuItem[K comparable, V any] struct {
 	freq     uint
 	expireAt *time.Time
 }
+
+func (l *LFUCache[K, V]) evict(n int) {
+	for i := 0; i < n; i++ {
+		if b := l.evictionList.Back(); b != nil {
+			delete(l.m, b.Value.(*lfuItem[K, V]).key)
+			l.evictionList.Remove(b)
+		} else {
+			return
+		}
+	}
+}
