@@ -72,6 +72,26 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 	}
 }
 
+func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	item, ok := l.m[key]
+	if !ok {
+		return
+	}
+
+	lfuItem := item.Value.(*lfuItem[K, V])
+	if lfuItem.expireAt != nil && lfuItem.expireAt.Before(time.Now()) {
+		l.delete(key, item)
+		return
+	}
+
+	l.move(item)
+
+	return lfuItem.value, true
+}
+
 func (l *LFUCache[K, V]) delete(key K, elem *list.Element) {
 	delete(l.m, key)
 	l.evictionList.Remove(elem)
