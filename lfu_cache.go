@@ -28,6 +28,36 @@ type lfuItem[K comparable, V any] struct {
 	expireAt *time.Time
 }
 
+func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
+	item, ok := l.m[key]
+	var tm *time.Time
+	if exp > 0 {
+		t := time.Now().Add(exp)
+		tm = &t
+	}
+	if ok {
+		lfuItem := item.Value.(*lfuItem[K, V])
+
+		lfuItem.value = value
+		lfuItem.expireAt = tm
+		lfuItem.freq++
+
+		l.move(item)
+	} else {
+		if len(l.m) == int(l.size) {
+			l.evict(1)
+		}
+
+		lfuItem := lfuItem[K, V]{
+			key:   key,
+			value: value,
+			freq:  1,
+		}
+
+		l.m[key] = l.evictionList.PushBack(&lfuItem)
+	}
+}
+
 func (l *LFUCache[K, V]) evict(n int) {
 	for i := 0; i < n; i++ {
 		if b := l.evictionList.Back(); b != nil {
