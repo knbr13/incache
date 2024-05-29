@@ -54,6 +54,7 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 
 		lfuItem.value = value
 		lfuItem.expireAt = tm
+		lfuItem.freq++
 
 		l.move(item)
 	} else {
@@ -62,12 +63,14 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 		}
 
 		lfuItem := lfuItem[K, V]{
-			key:   key,
-			value: value,
-			freq:  1,
+			key:      key,
+			value:    value,
+			expireAt: tm,
+			freq:     1,
 		}
 
 		l.m[key] = l.evictionList.PushBack(&lfuItem)
+		l.move(l.m[key])
 	}
 }
 
@@ -86,6 +89,7 @@ func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
 		return
 	}
 
+	lfuItem.freq++
 	l.move(item)
 
 	return lfuItem.value, true
@@ -232,22 +236,19 @@ func (l *LFUCache[K, V]) move(elem *list.Element) {
 
 	curr := elem
 	for ; curr.Prev() != nil; curr = curr.Prev() {
-		if freq != curr.Value.(*lfuItem[K, V]).freq {
+		if freq > curr.Value.(*lfuItem[K, V]).freq {
 			break
 		}
 	}
 
 	if curr == elem {
-		item.freq++
 		return
 	}
 
 	if curr.Value.(*lfuItem[K, V]).freq == freq {
 		l.evictionList.MoveToFront(elem)
-		item.freq++
 		return
 	}
 
 	l.evictionList.MoveAfter(elem, curr)
-	item.freq++
 }
