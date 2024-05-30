@@ -140,8 +140,8 @@ func (l *LFUCache[K, V]) GetAll() map[K]V {
 
 	m := make(map[K]V)
 	for k, v := range l.m {
-		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
-			m[k] = v.Value.(*lfuItem[K, V]).value
+		if lfuItem := v.Value.(*lfuItem[K, V]); lfuItem.expireAt == nil || !lfuItem.expireAt.Before(time.Now()) {
+			m[k] = lfuItem.value
 		}
 	}
 
@@ -154,9 +154,9 @@ func (src *LFUCache[K, V]) TransferTo(dst *LFUCache[K, V]) {
 	defer src.mu.Unlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+		if lfuItem := v.Value.(*lfuItem[K, V]); lfuItem.expireAt == nil || !lfuItem.expireAt.Before(time.Now()) {
 			src.delete(k, v)
-			dst.Set(k, v.Value.(*lfuItem[K, V]).value)
+			dst.Set(k, lfuItem.value)
 		}
 	}
 }
@@ -167,8 +167,8 @@ func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
 	defer src.mu.RUnlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
-			dst.Set(k, v.Value.(*lfuItem[K, V]).value)
+		if lfuItem := v.Value.(*lfuItem[K, V]); lfuItem.expireAt == nil || !lfuItem.expireAt.Before(time.Now()) {
+			dst.Set(k, lfuItem.value)
 		}
 	}
 }
@@ -183,7 +183,7 @@ func (l *LFUCache[K, V]) Keys() []K {
 	keys := make([]K, 0, l.Count())
 
 	for k, v := range l.m {
-		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+		if lfuItem := v.Value.(*lfuItem[K, V]); lfuItem.expireAt == nil || !lfuItem.expireAt.Before(time.Now()) {
 			keys = append(keys, k)
 		}
 	}
@@ -207,7 +207,7 @@ func (l *LFUCache[K, V]) Count() int {
 
 	var count int
 	for _, v := range l.m {
-		if v.Value.(*lfuItem[K, V]).expireAt == nil || !v.Value.(*lfuItem[K, V]).expireAt.Before(time.Now()) {
+		if lfuItem := v.Value.(*lfuItem[K, V]); lfuItem.expireAt == nil || !lfuItem.expireAt.Before(time.Now()) {
 			count++
 		}
 	}
