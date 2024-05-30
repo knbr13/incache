@@ -122,6 +122,7 @@ func TestCopyTo_LRU(t *testing.T) {
 	c.Set("key3", "value3")
 	c.Set("key4", "value4")
 	c.Set("key5", "value5")
+	c.SetWithTimeout("key6", "value6", time.Second)
 
 	c2 := NewLRU[string, string](10)
 
@@ -131,8 +132,8 @@ func TestCopyTo_LRU(t *testing.T) {
 		t.Errorf("CopyTo failed")
 	}
 
-	if c.Len() != c.Count() || c.Len() != 5 || c2.Len() != c2.Count() || c2.Len() != 5 {
-		t.Errorf("TransferTo failed")
+	if c.Len() != c.Count() || c.Len() != 6 || c2.Len() != c2.Count() || c2.Len() != 6 {
+		t.Errorf("CopyTo failed")
 	}
 }
 

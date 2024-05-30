@@ -30,7 +30,7 @@ func NewLRU[K comparable, V any](size uint) *LRUCache[K, V] {
 
 // Get retrieves the value associated with the given key from the cache.
 // If the key is not found or has expired, it returns (zero value of V, false).
-// If the key is found and not expired, it moves the key-value pair to the front of the eviction list.
+// Otherwise, it returns (value, true).
 func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -40,7 +40,8 @@ func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 		return
 	}
 
-	if item.Value.(*lruItem[K, V]).expireAt != nil && item.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+	lruItem := item.Value.(*lruItem[K, V])
+	if lruItem.expireAt != nil && lruItem.expireAt.Before(time.Now()) {
 		delete(c.m, k)
 		c.evictionList.Remove(item)
 		return
@@ -48,7 +49,7 @@ func (c *LRUCache[K, V]) Get(k K) (v V, b bool) {
 
 	c.evictionList.MoveToFront(item)
 
-	return item.Value.(*lruItem[K, V]).value, true
+	return lruItem.value, true
 }
 
 // GetAll retrieves all key-value pairs from the cache.
@@ -59,8 +60,9 @@ func (c *LRUCache[K, V]) GetAll() map[K]V {
 
 	m := make(map[K]V)
 	for k, v := range c.m {
-		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
-			m[k] = v.Value.(*lruItem[K, V]).value
+		lruItem := v.Value.(*lruItem[K, V])
+		if lruItem.expireAt == nil || !lruItem.expireAt.Before(time.Now()) {
+			m[k] = lruItem.value
 		}
 	}
 
@@ -138,9 +140,10 @@ func (src *LRUCache[K, V]) TransferTo(dst *LRUCache[K, V]) {
 	defer src.mu.Unlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		lruItem := v.Value.(*lruItem[K, V])
+		if lruItem.expireAt == nil || !lruItem.expireAt.Before(time.Now()) {
 			src.delete(k)
-			dst.Set(k, v.Value.(*lruItem[K, V]).value)
+			dst.Set(k, lruItem.value)
 		}
 	}
 }
@@ -151,8 +154,8 @@ func (src *LRUCache[K, V]) CopyTo(dst *LRUCache[K, V]) {
 	defer src.mu.Unlock()
 
 	for k, v := range src.m {
-		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
-			dst.Set(k, v.Value.(*lruItem[K, V]).value)
+		if lruItem := v.Value.(*lruItem[K, V]); lruItem.expireAt == nil || !lruItem.expireAt.Before(time.Now()) {
+			dst.Set(k, lruItem.value)
 		}
 	}
 }
@@ -167,7 +170,7 @@ func (c *LRUCache[K, V]) Keys() []K {
 	keys := make([]K, 0, c.Count())
 
 	for k, v := range c.m {
-		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if lruItem := v.Value.(*lruItem[K, V]); lruItem.expireAt == nil || !lruItem.expireAt.Before(time.Now()) {
 			keys = append(keys, k)
 		}
 	}
@@ -191,7 +194,7 @@ func (c *LRUCache[K, V]) Count() int {
 
 	var count int
 	for _, v := range c.m {
-		if v.Value.(*lruItem[K, V]).expireAt == nil || !v.Value.(*lruItem[K, V]).expireAt.Before(time.Now()) {
+		if lruItem := v.Value.(*lruItem[K, V]); lruItem.expireAt == nil || !lruItem.expireAt.Before(time.Now()) {
 			count++
 		}
 	}
@@ -215,8 +218,9 @@ func (c *LRUCache[K, V]) set(k K, v V, exp time.Duration) {
 		tm = &t
 	}
 	if ok {
-		item.Value.(*lruItem[K, V]).value = v
-		item.Value.(*lruItem[K, V]).expireAt = tm
+		lruItem := item.Value.(*lruItem[K, V])
+		lruItem.value = v
+		lruItem.expireAt = tm
 		c.evictionList.MoveToFront(item)
 	} else {
 		if len(c.m) == int(c.size) {
