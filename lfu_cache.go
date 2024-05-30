@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Least Frequently Used Cache
 type LFUCache[K comparable, V any] struct {
 	mu           sync.RWMutex
 	size         uint
@@ -28,6 +29,7 @@ type lfuItem[K comparable, V any] struct {
 	expireAt *time.Time
 }
 
+// Set adds the key-value pair to the cache.
 func (l *LFUCache[K, V]) Set(key K, value V) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -35,6 +37,7 @@ func (l *LFUCache[K, V]) Set(key K, value V) {
 	l.set(key, value, 0)
 }
 
+// SetWithTimeout adds the key-value pair to the cache with a specified expiration time.
 func (l *LFUCache[K, V]) SetWithTimeout(key K, value V, exp time.Duration) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -74,6 +77,9 @@ func (l *LFUCache[K, V]) set(key K, value V, exp time.Duration) {
 	}
 }
 
+// Get retrieves the value associated with the given key from the cache.
+// If the key is not found or has expired, it returns (zero value of V, false).
+// Otherwise, it returns (value, true).
 func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -95,6 +101,8 @@ func (l *LFUCache[K, V]) Get(key K) (v V, b bool) {
 	return lfuItem.value, true
 }
 
+// NotFoundSet adds the key-value pair to the cache only if the key does not exist.
+// It returns true if the key was added to the cache, otherwise false.
 func (l *LFUCache[K, V]) NotFoundSet(k K, v V) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -108,6 +116,9 @@ func (l *LFUCache[K, V]) NotFoundSet(k K, v V) bool {
 	return true
 }
 
+// NotFoundSetWithTimeout adds the key-value pair to the cache only if the key does not exist.
+// It sets an expiration time for the key-value pair.
+// It returns true if the key was added to the cache, otherwise false.
 func (l *LFUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -121,6 +132,8 @@ func (l *LFUCache[K, V]) NotFoundSetWithTimeout(k K, v V, t time.Duration) bool 
 	return true
 }
 
+// GetAll retrieves all key-value pairs from the cache.
+// It returns a map containing all the key-value pairs that are not expired.
 func (l *LFUCache[K, V]) GetAll() map[K]V {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -135,6 +148,7 @@ func (l *LFUCache[K, V]) GetAll() map[K]V {
 	return m
 }
 
+// TransferTo transfers all non-expired key-value pairs from the source cache to the destination cache.
 func (src *LFUCache[K, V]) TransferTo(dst *LFUCache[K, V]) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
@@ -147,6 +161,7 @@ func (src *LFUCache[K, V]) TransferTo(dst *LFUCache[K, V]) {
 	}
 }
 
+// CopyTo copies all non-expired key-value pairs from the source cache to the destination cache.
 func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
 	src.mu.RLock()
 	defer src.mu.RUnlock()
@@ -158,6 +173,9 @@ func (src *LFUCache[K, V]) CopyTo(dst *LFUCache[K, V]) {
 	}
 }
 
+// Keys returns a slice of all keys currently stored in the cache.
+// The returned slice does not include expired keys.
+// The order of keys in the slice is not guaranteed.
 func (l *LFUCache[K, V]) Keys() []K {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -173,6 +191,7 @@ func (l *LFUCache[K, V]) Keys() []K {
 	return keys
 }
 
+// Purge removes all key-value pairs from the cache.
 func (l *LFUCache[K, V]) Purge() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -181,6 +200,7 @@ func (l *LFUCache[K, V]) Purge() {
 	l.evictionList.Init()
 }
 
+// Count returns the number of non-expired key-value pairs currently stored in the cache.
 func (l *LFUCache[K, V]) Count() int {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -195,6 +215,7 @@ func (l *LFUCache[K, V]) Count() int {
 	return count
 }
 
+// Len returns the number of elements in the cache.
 func (l *LFUCache[K, V]) Len() int {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -202,6 +223,7 @@ func (l *LFUCache[K, V]) Len() int {
 	return len(l.m)
 }
 
+// Delete removes the key-value pair associated with the given key from the cache.
 func (l *LFUCache[K, V]) Delete(k K) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
