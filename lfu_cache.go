@@ -258,7 +258,7 @@ func (l *LFUCache[K, V]) move(elem *list.Element) {
 
 	curr := elem
 	for ; curr.Prev() != nil; curr = curr.Prev() {
-		if freq > curr.Value.(*lfuItem[K, V]).freq {
+		if freq < curr.Value.(*lfuItem[K, V]).freq {
 			break
 		}
 	}
